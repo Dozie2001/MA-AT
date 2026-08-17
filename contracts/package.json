@@ -1,0 +1,33 @@
+{
+  "name": "@maat/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "hardhat compile",
+    "check": "tsc -p tsconfig.scripts.json --noEmit",
+    "clean": "hardhat clean",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "preflight:settlement": "hardhat run scripts/preflight-settlement.ts",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
+    "deploy:creditcoin": "hardhat run scripts/deploy-creditcoin.ts --network creditcoinTestnet",
+    "deploy:settlement:sepolia": "hardhat run scripts/deploy-settlement-sepolia.ts --network sepolia",
+    "deploy:settlement:creditcoin": "hardhat run scripts/deploy-settlement-creditcoin.ts --network creditcoinTestnet",
+    "invoice:create": "hardhat run scripts/create-invoice-creditcoin.ts --network creditcoinTestnet",
+    "invoice:pay": "hardhat run scripts/pay-invoice-sepolia.ts --network sepolia",
+    "report:sepolia": "hardhat run scripts/report-execution-sepolia.ts --network sepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.0",
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.0",
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "hardhat": "^3.13.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1"
+  }
+}

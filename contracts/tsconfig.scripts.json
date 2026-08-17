@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "./hardhat.config.ts",
+    "./scripts/**/*.ts"
+  ],
+  "exclude": [
+    "./test/**/*.ts"
+  ]
+}
