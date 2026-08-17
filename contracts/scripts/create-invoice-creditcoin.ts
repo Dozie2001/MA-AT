@@ -5,9 +5,9 @@ const CREDITCOIN_TESTNET_CHAIN_ID = 102_031n;
 
 async function main(): Promise<void> {
   const { ethers } = await network.create("creditcoinTestnet");
-  const privateKey = process.env.CREDITCOIN_PRIVATE_KEY;
+  const privateKey = process.env.VENDOR_PRIVATE_KEY;
   if (!privateKey) {
-    throw new Error("Missing CREDITCOIN_PRIVATE_KEY in environment");
+    throw new Error("Missing VENDOR_PRIVATE_KEY in environment");
   }
 
   const registryValue = process.env.INVOICE_REGISTRY_ADDRESS;

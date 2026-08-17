@@ -31,6 +31,10 @@ async function main(): Promise<void> {
     required("CREDITCOIN_PRIVATE_KEY"),
     creditcoinProvider
   );
+  const vendorSigner = new Wallet(required("VENDOR_PRIVATE_KEY"), creditcoinProvider);
+  if (vendorSigner.address === sepoliaSigner.address) {
+    throw new Error("VENDOR_PRIVATE_KEY must derive a different address from the buyer");
+  }
 
   const configuredCreditcoinChainId = Number(required("CREDITCOIN_CHAIN_ID"));
   if (configuredCreditcoinChainId !== Number(CREDITCOIN_TESTNET_CHAIN_ID)) {
@@ -64,10 +68,11 @@ async function main(): Promise<void> {
     );
   }
 
-  const [usdcCode, sepoliaEth, creditcoinCtc] = await Promise.all([
+  const [usdcCode, sepoliaEth, creditcoinCtc, vendorCtc] = await Promise.all([
     sepoliaProvider.getCode(configuredUsdc),
     sepoliaProvider.getBalance(sepoliaSigner.address),
-    creditcoinProvider.getBalance(creditcoinSigner.address)
+    creditcoinProvider.getBalance(creditcoinSigner.address),
+    creditcoinProvider.getBalance(vendorSigner.address)
   ]);
   if (usdcCode === "0x") {
     throw new Error(`No bytecode at official Sepolia USDC ${configuredUsdc}`);
@@ -137,6 +142,11 @@ async function main(): Promise<void> {
           ctcBalance: formatEther(creditcoinCtc),
           verifierPrecompile: VERIFIER_PRECOMPILE,
           verifierCalculateTxIndexProbe: precompileProbe.toString()
+        },
+        vendor: {
+          address: vendorSigner.address,
+          ctcBalance: formatEther(vendorCtc),
+          distinctFromBuyer: true
         },
         signerAddressesMatch: sepoliaSigner.address === creditcoinSigner.address,
         attestcoin: {

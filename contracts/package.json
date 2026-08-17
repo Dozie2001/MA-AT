@@ -10,12 +10,13 @@
     "test": "hardhat test",
     "node": "hardhat node",
     "preflight:settlement": "hardhat run scripts/preflight-settlement.ts",
+    "verify:settlement:deployment": "hardhat run scripts/verify-settlement-deployment.ts",
     "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
     "deploy:creditcoin": "hardhat run scripts/deploy-creditcoin.ts --network creditcoinTestnet",
     "deploy:settlement:sepolia": "hardhat run scripts/deploy-settlement-sepolia.ts --network sepolia",
     "deploy:settlement:creditcoin": "hardhat run scripts/deploy-settlement-creditcoin.ts --network creditcoinTestnet",
-    "invoice:create": "hardhat run scripts/create-invoice-creditcoin.ts --network creditcoinTestnet",
-    "invoice:pay": "hardhat run scripts/pay-invoice-sepolia.ts --network sepolia",
+    "invoice:create": "node scripts/create-invoice-creditcoin.ts",
+    "invoice:pay": "node scripts/pay-invoice-sepolia.ts",
     "report:sepolia": "hardhat run scripts/report-execution-sepolia.ts --network sepolia"
   },
   "devDependencies": {

@@ -46,6 +46,33 @@ if (process.env.SEPOLIA_RPC_URL) {
 
 export default defineConfig({
   plugins: [hardhatToolboxMochaEthers],
+  chainDescriptors: {
+    102031: {
+      name: "Creditcoin Testnet",
+      blockExplorers: {
+        blockscout: {
+          name: "Creditcoin Testnet Blockscout",
+          url: "https://creditcoin-testnet.blockscout.com",
+          apiUrl: "https://creditcoin-testnet.blockscout.com/api"
+        }
+      }
+    }
+  },
+  verify: {
+    blockscout: {
+      enabled: true
+    },
+    etherscan: process.env.ETHERSCAN_API_KEY
+      ? {
+          apiKey: process.env.ETHERSCAN_API_KEY
+        }
+      : {
+          enabled: false
+        },
+    sourcify: {
+      enabled: false
+    }
+  },
   solidity: {
     version: "0.8.28",
     settings: {

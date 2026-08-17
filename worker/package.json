@@ -1,0 +1,26 @@
+{
+  "name": "@maat/worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "watch-sepolia": "node --import tsx src/watchSepolia.ts",
+    "process-tx": "node --import tsx src/processTx.ts",
+    "verify-state": "node --import tsx src/verifyState.ts",
+    "watch-settlements": "node --import tsx src/watchSettlements.ts",
+    "process-settlement": "node --import tsx src/processSettlementTx.ts",
+    "verify-settlement": "node --import tsx src/verifySettlementState.ts"
+  },
+  "dependencies": {
+    "@gluwa/usc-sdk": "^0.18.0",
+    "dotenv": "^17.2.1",
+    "viem": "^2.37.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
