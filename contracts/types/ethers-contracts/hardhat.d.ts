@@ -11,70 +11,66 @@ import * as Contracts from "./index.js";
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
   getContractFactory(name: 'InvoiceRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.InvoiceRegistry__factory>
-getContractFactory(name: 'MaatCore', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatCore__factory>
 getContractFactory(name: 'ExecutionReporter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ExecutionReporter__factory>
 getContractFactory(name: 'MaatCreditPolicy', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatCreditPolicy__factory>
-getContractFactory(name: 'MaatSettlementVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatSettlementVerifier__factory>
+getContractFactory(name: 'MaatCore', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatCore__factory>
 getContractFactory(name: 'MaatPolicy', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatPolicy__factory>
+getContractFactory(name: 'MaatSettlementVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatSettlementVerifier__factory>
 getContractFactory(name: 'MaatTrustRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatTrustRegistry__factory>
 getContractFactory(name: 'INativeQueryVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.INativeQueryVerifier__factory>
 getContractFactory(name: 'MaatVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaatVerifier__factory>
 getContractFactory(name: 'SettlementRouter', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.SettlementRouter__factory>
 getContractFactory(name: 'IAttestcoinQueryVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IAttestcoinQueryVerifier__factory>
-getContractFactory(name: 'AttestedExecutionDecoderHarness', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AttestedExecutionDecoderHarness__factory>
-getContractFactory(name: 'AttestedPaymentDiagnosticHarness', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AttestedPaymentDiagnosticHarness__factory>
 getContractFactory(name: 'AttestedPaymentDecoderHarness', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AttestedPaymentDecoderHarness__factory>
+getContractFactory(name: 'AttestedExecutionDecoderHarness', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.AttestedExecutionDecoderHarness__factory>
 getContractFactory(name: 'MockUSDC', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockUSDC__factory>
 getContractFactory(name: 'MockAttestcoinQueryVerifier', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockAttestcoinQueryVerifier__factory>
 
   getContractAt(name: 'InvoiceRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.InvoiceRegistry>
-getContractAt(name: 'MaatCore', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatCore>
 getContractAt(name: 'ExecutionReporter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ExecutionReporter>
 getContractAt(name: 'MaatCreditPolicy', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatCreditPolicy>
-getContractAt(name: 'MaatSettlementVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatSettlementVerifier>
+getContractAt(name: 'MaatCore', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatCore>
 getContractAt(name: 'MaatPolicy', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatPolicy>
+getContractAt(name: 'MaatSettlementVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatSettlementVerifier>
 getContractAt(name: 'MaatTrustRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatTrustRegistry>
 getContractAt(name: 'INativeQueryVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.INativeQueryVerifier>
 getContractAt(name: 'MaatVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaatVerifier>
 getContractAt(name: 'SettlementRouter', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.SettlementRouter>
 getContractAt(name: 'IAttestcoinQueryVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IAttestcoinQueryVerifier>
-getContractAt(name: 'AttestedExecutionDecoderHarness', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AttestedExecutionDecoderHarness>
-getContractAt(name: 'AttestedPaymentDiagnosticHarness', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AttestedPaymentDiagnosticHarness>
 getContractAt(name: 'AttestedPaymentDecoderHarness', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AttestedPaymentDecoderHarness>
+getContractAt(name: 'AttestedExecutionDecoderHarness', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.AttestedExecutionDecoderHarness>
 getContractAt(name: 'MockUSDC', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockUSDC>
 getContractAt(name: 'MockAttestcoinQueryVerifier', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockAttestcoinQueryVerifier>
 
   deployContract(name: 'InvoiceRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.InvoiceRegistry>
-deployContract(name: 'MaatCore', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCore>
 deployContract(name: 'ExecutionReporter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ExecutionReporter>
 deployContract(name: 'MaatCreditPolicy', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCreditPolicy>
-deployContract(name: 'MaatSettlementVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatSettlementVerifier>
+deployContract(name: 'MaatCore', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCore>
 deployContract(name: 'MaatPolicy', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatPolicy>
+deployContract(name: 'MaatSettlementVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatSettlementVerifier>
 deployContract(name: 'MaatTrustRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatTrustRegistry>
 deployContract(name: 'INativeQueryVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.INativeQueryVerifier>
 deployContract(name: 'MaatVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatVerifier>
 deployContract(name: 'SettlementRouter', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.SettlementRouter>
 deployContract(name: 'IAttestcoinQueryVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IAttestcoinQueryVerifier>
-deployContract(name: 'AttestedExecutionDecoderHarness', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedExecutionDecoderHarness>
-deployContract(name: 'AttestedPaymentDiagnosticHarness', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedPaymentDiagnosticHarness>
 deployContract(name: 'AttestedPaymentDecoderHarness', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedPaymentDecoderHarness>
+deployContract(name: 'AttestedExecutionDecoderHarness', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedExecutionDecoderHarness>
 deployContract(name: 'MockUSDC', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
 deployContract(name: 'MockAttestcoinQueryVerifier', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockAttestcoinQueryVerifier>
 
   deployContract(name: 'InvoiceRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.InvoiceRegistry>
-deployContract(name: 'MaatCore', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCore>
 deployContract(name: 'ExecutionReporter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ExecutionReporter>
 deployContract(name: 'MaatCreditPolicy', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCreditPolicy>
-deployContract(name: 'MaatSettlementVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatSettlementVerifier>
+deployContract(name: 'MaatCore', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatCore>
 deployContract(name: 'MaatPolicy', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatPolicy>
+deployContract(name: 'MaatSettlementVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatSettlementVerifier>
 deployContract(name: 'MaatTrustRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatTrustRegistry>
 deployContract(name: 'INativeQueryVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.INativeQueryVerifier>
 deployContract(name: 'MaatVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaatVerifier>
 deployContract(name: 'SettlementRouter', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.SettlementRouter>
 deployContract(name: 'IAttestcoinQueryVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IAttestcoinQueryVerifier>
-deployContract(name: 'AttestedExecutionDecoderHarness', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedExecutionDecoderHarness>
-deployContract(name: 'AttestedPaymentDiagnosticHarness', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedPaymentDiagnosticHarness>
 deployContract(name: 'AttestedPaymentDecoderHarness', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedPaymentDecoderHarness>
+deployContract(name: 'AttestedExecutionDecoderHarness', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.AttestedExecutionDecoderHarness>
 deployContract(name: 'MockUSDC', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
 deployContract(name: 'MockAttestcoinQueryVerifier', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockAttestcoinQueryVerifier>
 
