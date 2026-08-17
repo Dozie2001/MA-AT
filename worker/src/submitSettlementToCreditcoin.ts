@@ -92,9 +92,6 @@ export async function submitSettlementToCreditcoin(
     }
   ] as const;
 
-  const latestBlock = await publicClient.getBlock();
-  const simulationGas = (latestBlock.gasLimit * 4n) / 5n;
-
   let request;
   try {
     ({ request } = await publicClient.simulateContract({
@@ -102,8 +99,7 @@ export async function submitSettlementToCreditcoin(
       address: getAddress(config.settlementVerifierAddress),
       abi: settlementVerifierAbi,
       functionName: "submitVerifiedSettlement",
-      args,
-      gas: simulationGas
+      args
     }));
   } catch (error) {
     if (error instanceof BaseError) {
@@ -141,8 +137,7 @@ export async function submitSettlementToCreditcoin(
         paidAt: payload.paidAt.toString(),
         proofTxHash: payload.proof.txHash,
         proofHeaderNumber: payload.proof.headerNumber,
-        proofTxIndex: payload.proof.txIndex,
-        simulationGas: simulationGas.toString()
+        proofTxIndex: payload.proof.txIndex
       },
       null,
       2

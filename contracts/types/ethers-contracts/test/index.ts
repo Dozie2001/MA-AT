@@ -3,6 +3,5 @@
 /* eslint-disable */
 export type { AttestedExecutionDecoderHarness } from './AttestedExecutionDecoderHarness.js';
 export type { AttestedPaymentDecoderHarness } from './AttestedPaymentDecoderHarness.js';
-export type { AttestedPaymentDiagnosticHarness } from './AttestedPaymentDiagnosticHarness.js';
 export type { MockAttestcoinQueryVerifier } from './MockAttestcoinQueryVerifier.js';
 export type { MockUSDC } from './MockUSDC.js';
