@@ -10,6 +10,9 @@ const paymentEventSignature = ethers.id(
 const invoiceId = ethers.id("payment-decoder-invoice");
 const amount = 750n * 1_000_000n;
 const paidAt = 1_700_000_000n;
+const routerInterface = new ethers.Interface([
+  "function payInvoice(bytes32 invoiceId,address vendor,uint256 amount)"
+]);
 
 type EncodedPaymentOptions = {
   payer: string;
@@ -36,7 +39,15 @@ function encodeAttestedPayment(options: EncodedPaymentOptions) {
 
   const commonFields = coder.encode(
     ["uint64", "uint64", "address", "bool", "address", "uint256", "bytes"],
-    [0, 100_000, options.payer, false, options.destination ?? options.router, 0, "0x"]
+    [
+      0,
+      100_000,
+      options.payer,
+      false,
+      options.destination ?? options.router,
+      0,
+      routerInterface.encodeFunctionData("payInvoice", [invoiceId, options.vendor, amount])
+    ]
   );
   const receiptFields = coder.encode(
     ["uint8", "uint64", "tuple(address,bytes32[],bytes)[]", "bytes"],

@@ -5,16 +5,6 @@ library AttestedPaymentDecoder {
     bytes32 internal constant PAYMENT_EVENT_SIGNATURE =
         keccak256("InvoicePaid(bytes32,address,address,uint256,uint256)");
 
-    struct CommonTxFields {
-        uint64 nonce;
-        uint64 gasLimit;
-        address sender;
-        bool toIsNull;
-        address destination;
-        uint256 value;
-        bytes data;
-    }
-
     struct ReceiptLog {
         address emitter;
         bytes32[] topics;
@@ -39,9 +29,17 @@ library AttestedPaymentDecoder {
         uint256 receiptChunkIndex = txType <= 2 ? 2 : 3;
         require(chunks.length == receiptChunkIndex + 1, "invalid transaction chunks");
 
-        CommonTxFields memory common = abi.decode(chunks[0], (CommonTxFields));
+        (
+            ,
+            ,
+            ,
+            bool toIsNull,
+            address destination,
+            ,
+
+        ) = abi.decode(chunks[0], (uint64, uint64, address, bool, address, uint256, bytes));
         require(
-            !common.toIsNull && common.destination == sourceRouter,
+            !toIsNull && destination == sourceRouter,
             "unexpected transaction destination"
         );
 

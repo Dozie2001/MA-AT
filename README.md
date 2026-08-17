@@ -22,7 +22,17 @@ Creditcoin SettlementVerifier -> InvoiceRegistry -> TrustRegistry -> CreditPolic
 
 ## Current Status
 
-The settlement contracts, proof decoder, verifier integration, worker, and transaction scripts are implemented locally. The contract suite has 43 passing tests, and both the contract scripts and worker pass TypeScript checks. Live settlement deployment and one real Sepolia-to-Creditcoin proof are next.
+The settlement contracts are deployed and source-verified on Sepolia and Creditcoin Testnet. The contract suite has 43 passing tests, and both the contract scripts and worker pass TypeScript checks. Creating and paying the first invoice and submitting its real Attestcoin proof are next.
+
+Settlement deployment:
+
+| Component | Network | Address |
+| --- | --- | --- |
+| `SettlementRouter` | Ethereum Sepolia | [`0xCf3D...2fAe`](https://sepolia.etherscan.io/address/0xCf3D8C3a3ADD06E8d4737f3AfF120e3257122fAe#code) |
+| `InvoiceRegistry` | Creditcoin Testnet | [`0x934e...6114`](https://creditcoin-testnet.blockscout.com/address/0x934e10191833E4544e6E335b0Fa0459f01e26114#code) |
+| `MaatTrustRegistry` | Creditcoin Testnet | [`0x75A1...b4d6`](https://creditcoin-testnet.blockscout.com/address/0x75A1Dc5ad3edCE91F8d796a2E860C0146603b4d6#code) |
+| `MaatSettlementVerifier` | Creditcoin Testnet | [`0x42F8...1147`](https://creditcoin-testnet.blockscout.com/address/0x42F875971648A3584A24dAD58F784ebEb75F1147#code) |
+| `MaatCreditPolicy` | Creditcoin Testnet | [`0xB5eD...17cF`](https://creditcoin-testnet.blockscout.com/address/0xB5eD84E5cA917Cb4Cda1FF600b78b9e57cab17cF#code) |
 
 The existing legacy prototype has already proven the difficult Attestcoin foundation: proof polling, proof submission, native precompile verification, semantic receipt decoding, immutable source binding, and replay protection. Its latest deployment currently contains two verified execution proofs and remains tier `None`; it is not the final settlement deployment.
 
@@ -44,6 +54,8 @@ Requirements:
 - Node.js 22 or newer
 - funded Ethereum Sepolia and Creditcoin Testnet accounts
 - Sepolia and Creditcoin RPC endpoints
+
+The CLI end-to-end demo uses distinct roles: `SEPOLIA_PRIVATE_KEY` is the buyer, `VENDOR_PRIVATE_KEY` creates the invoice and receives USDC, and `CREDITCOIN_PRIVATE_KEY` deploys contracts and relays proofs. Invoice terms remain runtime arguments, not environment variables.
 
 Create `.env` from `.env.example`, then install and test both workspaces:
 
@@ -93,8 +105,8 @@ npm run watch-settlements
 
 ## Current Limitations
 
-- settlement contracts have not yet been deployed to public testnets
 - the live settlement Attestcoin proof has not yet been completed
+- the configured payer currently needs Sepolia USDC and a distinct vendor account
 - the watcher does not persist its cursor or retry queue across restarts
 - no dashboard exists yet
 

@@ -3,5 +3,6 @@
 /* eslint-disable */
 export { AttestedExecutionDecoderHarness__factory } from './AttestedExecutionDecoderHarness__factory.js';
 export { AttestedPaymentDecoderHarness__factory } from './AttestedPaymentDecoderHarness__factory.js';
+export { AttestedPaymentDiagnosticHarness__factory } from './AttestedPaymentDiagnosticHarness__factory.js';
 export { MockAttestcoinQueryVerifier__factory } from './MockAttestcoinQueryVerifier__factory.js';
 export { MockUSDC__factory } from './MockUSDC__factory.js';
