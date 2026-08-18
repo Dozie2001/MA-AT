@@ -825,6 +825,25 @@ button:disabled,
 .lookup-form {
   display: flex;
   gap: 9px;
+  align-items: flex-end;
+}
+
+.lookup-field {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  min-width: 0;
+}
+
+.lookup-field label {
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.field-error {
+  color: var(--destructive);
+  font-size: 11px;
 }
 
 .field,
@@ -1030,7 +1049,8 @@ button:disabled,
 }
 
 .success-state p,
-.success-state .button-primary {
+.success-state .button-primary,
+.success-state .invoice-share {
   grid-column: 1 / -1;
 }
 
@@ -1045,6 +1065,65 @@ button:disabled,
   color: var(--muted-foreground);
   font-size: 10px;
   overflow-wrap: anywhere;
+}
+
+.invoice-share {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 690px);
+  margin-top: 18px;
+}
+
+.invoice-id-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--card), transparent 10%);
+}
+
+.invoice-id-row > div {
+  min-width: 0;
+}
+
+.invoice-id-row span,
+.invoice-id-row code {
+  display: block;
+}
+
+.invoice-id-row span {
+  margin-bottom: 4px;
+  color: var(--muted-foreground);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.invoice-id-row code {
+  color: var(--foreground);
+  font-family: var(--mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.invoice-share-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.invoice-share-actions button {
+  min-height: 42px;
+}
+
+.share-feedback {
+  color: var(--muted-foreground);
+  font-size: 10px;
 }
 
 .token-heading {

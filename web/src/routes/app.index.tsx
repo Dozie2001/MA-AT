@@ -7,6 +7,7 @@ import {
 import { ArrowRight, FilePlus2, Search, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { isHex } from 'viem'
+import type { Hex } from 'viem'
 import { useConnection, useReadContracts } from 'wagmi'
 
 import { StatusPill } from '../components/status-pill'
@@ -24,10 +25,27 @@ import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/')({ component: Dashboard })
 
+function parseInvoiceLocator(value: string): Hex | undefined {
+  let candidate = value.trim()
+
+  try {
+    const url = new URL(candidate)
+    const match = url.pathname.match(/\/app\/invoices\/(0x[0-9a-fA-F]{64})\/?$/)
+    if (match) candidate = match[1]
+  } catch {
+    // Raw invoice IDs are expected to fail URL parsing.
+  }
+
+  return isHex(candidate, { strict: true }) && candidate.length === 66
+    ? candidate
+    : undefined
+}
+
 function Dashboard() {
   const connection = useConnection()
   const navigate = useNavigate({ from: '/app/' })
   const [lookup, setLookup] = useState('')
+  const [lookupError, setLookupError] = useState<string>()
   const [savedInvoices, setSavedInvoices] = useState<Array<SavedInvoice>>([])
   const address = connection.address
 
@@ -61,12 +79,20 @@ function Dashboard() {
 
   function submitLookup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (isHex(lookup, { strict: true }) && lookup.length === 66) {
-      void navigate({
-        to: '/app/invoices/$invoiceId',
-        params: { invoiceId: lookup },
-      })
+    const invoiceId = parseInvoiceLocator(lookup)
+
+    if (!invoiceId) {
+      setLookupError(
+        "Enter a 32-byte invoice ID or paste a Ma'at customer invoice link.",
+      )
+      return
     }
+
+    setLookupError(undefined)
+    void navigate({
+      to: '/app/invoices/$invoiceId',
+      params: { invoiceId },
+    })
   }
 
   return (
@@ -153,24 +179,39 @@ function Dashboard() {
                 <span className="eyebrow">INVOICE LOOKUP</span>
                 <h2>Inspect exact state</h2>
                 <p>
-                  Enter any bytes32 invoice ID. This reads InvoiceRegistry
-                  directly.
+                  Enter a bytes32 invoice ID or paste a customer link. This
+                  reads InvoiceRegistry directly.
                 </p>
               </div>
             </div>
             <form className="lookup-form" onSubmit={submitLookup}>
-              <input
-                aria-label="Invoice ID"
-                placeholder="0x... 32-byte invoice ID"
-                value={lookup}
-                onChange={(event) => setLookup(event.target.value.trim())}
-              />
+              <div className="lookup-field">
+                <label htmlFor="invoice-lookup">
+                  Invoice ID or customer link
+                </label>
+                <input
+                  id="invoice-lookup"
+                  placeholder="0x... or https://.../app/invoices/0x..."
+                  value={lookup}
+                  aria-invalid={Boolean(lookupError)}
+                  aria-describedby={
+                    lookupError ? 'invoice-lookup-error' : undefined
+                  }
+                  onChange={(event) => {
+                    setLookup(event.target.value)
+                    setLookupError(undefined)
+                  }}
+                />
+                {lookupError ? (
+                  <span className="field-error" id="invoice-lookup-error">
+                    {lookupError}
+                  </span>
+                ) : null}
+              </div>
               <button
                 className="button-secondary"
                 type="submit"
-                disabled={
-                  !isHex(lookup, { strict: true }) || lookup.length !== 66
-                }
+                disabled={!lookup.trim()}
               >
                 <Search size={15} /> Look up
               </button>

@@ -4,17 +4,35 @@ This document describes how Ma'at uses the Attestcoin Protocol to convert a veri
 
 ## Implementation Status
 
-The settlement integration is implemented, locally tested, deployed, and source-verified on Sepolia and Creditcoin Testnet. Its first real settlement proof remains pending. Historical live evidence from the execution-reputation prototype is retained at the end of this document because it validates the same proof transport, native verifier, transaction envelope, and replay design.
+The settlement integration is implemented, locally tested, deployed, source-verified, and proven end to end on Sepolia and Creditcoin Testnet. A real Attestcoin proof settled an exact on-time USDC invoice, updated trust and credit policy, and rejected replay. Historical live evidence from the execution-reputation prototype is retained at the end of this document because it validates the earlier proof transport iterations.
 
 ## Settlement Deployment
 
 | Component | Network | Verified address |
 | --- | --- | --- |
 | `SettlementRouter` | Ethereum Sepolia | [`0xCf3D8C3a3ADD06E8d4737f3AfF120e3257122fAe`](https://sepolia.etherscan.io/address/0xCf3D8C3a3ADD06E8d4737f3AfF120e3257122fAe#code) |
-| `InvoiceRegistry` | Creditcoin Testnet | [`0x934e10191833E4544e6E335b0Fa0459f01e26114`](https://creditcoin-testnet.blockscout.com/address/0x934e10191833E4544e6E335b0Fa0459f01e26114#code) |
-| `MaatTrustRegistry` | Creditcoin Testnet | [`0x75A1Dc5ad3edCE91F8d796a2E860C0146603b4d6`](https://creditcoin-testnet.blockscout.com/address/0x75A1Dc5ad3edCE91F8d796a2E860C0146603b4d6#code) |
-| `MaatSettlementVerifier` | Creditcoin Testnet | [`0x42F875971648A3584A24dAD58F784ebEb75F1147`](https://creditcoin-testnet.blockscout.com/address/0x42F875971648A3584A24dAD58F784ebEb75F1147#code) |
-| `MaatCreditPolicy` | Creditcoin Testnet | [`0xB5eD84E5cA917Cb4Cda1FF600b78b9e57cab17cF`](https://creditcoin-testnet.blockscout.com/address/0xB5eD84E5cA917Cb4Cda1FF600b78b9e57cab17cF#code) |
+| `InvoiceRegistry` | Creditcoin Testnet | [`0x3923CF7230ca3144F323FC884b1eACaF5860EF50`](https://creditcoin-testnet.blockscout.com/address/0x3923CF7230ca3144F323FC884b1eACaF5860EF50#code) |
+| `MaatTrustRegistry` | Creditcoin Testnet | [`0xa6a3e5aa35571ff6f7e6F64Df3E457F56551821a`](https://creditcoin-testnet.blockscout.com/address/0xa6a3e5aa35571ff6f7e6F64Df3E457F56551821a#code) |
+| `MaatSettlementVerifier` | Creditcoin Testnet | [`0x56e06DD47711D8433D7160E28E6ad771a0fc7e2d`](https://creditcoin-testnet.blockscout.com/address/0x56e06DD47711D8433D7160E28E6ad771a0fc7e2d#code) |
+| `MaatCreditPolicy` | Creditcoin Testnet | [`0x68169737E733f2b1461BB699b1f3Be05202A6dB5`](https://creditcoin-testnet.blockscout.com/address/0x68169737E733f2b1461BB699b1f3Be05202A6dB5#code) |
+
+## Live Settlement Evidence
+
+| Evidence | Transaction |
+| --- | --- |
+| Invoice creation | [`0xebbdcf04423ee914f43a33ea325e9161dfcda8e42bbf3cf4c64d71b2e25ca4e2`](https://creditcoin-testnet.blockscout.com/tx/0xebbdcf04423ee914f43a33ea325e9161dfcda8e42bbf3cf4c64d71b2e25ca4e2) |
+| Sepolia USDC payment | [`0xb8d079f555b3caac2d74ade0fcefebbd384d57294ac9d318fc964ae1dde0f58e`](https://sepolia.etherscan.io/tx/0xb8d079f555b3caac2d74ade0fcefebbd384d57294ac9d318fc964ae1dde0f58e) |
+| Attestcoin settlement | [`0x643149722959cc293226e8ceab3d0e73881227c10aa9a69125c089c27d86c5b2`](https://creditcoin-testnet.blockscout.com/tx/0x643149722959cc293226e8ceab3d0e73881227c10aa9a69125c089c27d86c5b2) |
+
+Verified result for invoice `0x538ff4b046151de88401b9774abde0ed1a26a39fb3976057b551ab1f1f38b740`:
+
+- status `2` (`Settled`)
+- amount `1,000,000` base units (`1 USDC`)
+- settled timestamp `1786978248`, before due timestamp `1786978569`
+- payer tier `1` (`Bronze`)
+- credit limit `1,000,000,000` base units (`1,000 USDC`)
+- source-query and invoice replay markers both set
+- second proof submission rejected during simulation as `QueryAlreadyProcessed`
 
 ## Verified Environment
 

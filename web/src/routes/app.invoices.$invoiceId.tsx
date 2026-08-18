@@ -19,6 +19,7 @@ import {
   useWriteContract,
 } from 'wagmi'
 
+import { InvoiceShareActions } from '../components/invoice-share-actions'
 import { StatusPill } from '../components/status-pill'
 import {
   contracts,
@@ -296,7 +297,7 @@ function InvoiceDetail() {
             <img src={usdcIconUrl} alt="USDC" /> {formatUsdc(invoice.amount)}{' '}
             USDC
           </h1>
-          <p className="mono invoice-title-id">{invoiceId}</p>
+          <InvoiceShareActions invoiceId={invoiceId} />
         </div>
         <StatusPill
           tone={

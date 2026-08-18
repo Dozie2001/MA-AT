@@ -23,6 +23,7 @@ import {
   useWriteContract,
 } from 'wagmi'
 
+import { InvoiceShareActions } from '../components/invoice-share-actions'
 import { StatusPill } from '../components/status-pill'
 import { contracts, invoiceRegistryAbi, usdcIconUrl } from '../lib/contracts'
 import { errorMessage, explorerTransaction } from '../lib/format'
@@ -344,6 +345,7 @@ function NewInvoice() {
                 The receipt event matches the submitted vendor, buyer, amount,
                 due time, and metadata hash.
               </p>
+              <InvoiceShareActions invoiceId={invoiceId} />
               <Link
                 className="button-primary"
                 to="/app/invoices/$invoiceId"
