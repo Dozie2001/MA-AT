@@ -45,7 +45,7 @@ function normalizePrivateKey(value: string): `0x${string}` {
 
 export async function submitSettlementToCreditcoin(
   payload: VerifiedSettlementPreview
-): Promise<void> {
+): Promise<`0x${string}`> {
   if (!config.settlementVerifierAddress) {
     throw new Error("Missing MAAT_SETTLEMENT_VERIFIER_ADDRESS in environment");
   }
@@ -143,4 +143,6 @@ export async function submitSettlementToCreditcoin(
       2
     )
   );
+
+  return creditcoinTxHash;
 }

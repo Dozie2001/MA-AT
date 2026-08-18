@@ -1,79 +1,307 @@
-import {
-  createPublicClient,
-  decodeEventLog,
-  getAddress,
-  http,
-  parseAbiItem
-} from "viem";
+import { createPublicClient, getAddress, http, parseAbi } from "viem";
+import type { Hex } from "viem";
 import { sepolia } from "viem/chains";
 
 import { buildProof } from "./buildProof.js";
 import { config } from "./config.js";
+import { loadCursor, saveCursor } from "./cursorStore.js";
+import { decodePaymentLog, paymentEvent } from "./payment.js";
+import type { InvoicePayment } from "./payment.js";
+import { processSettlement } from "./processSettlement.js";
+import { SettlementQueue } from "./settlementQueue.js";
 import { submitSettlementToCreditcoin } from "./submitSettlementToCreditcoin.js";
 
-const paymentEvent = parseAbiItem(
-  "event InvoicePaid(bytes32 indexed invoiceId, address indexed payer, address indexed vendor, uint256 amount, uint256 paidAt)"
-);
+const invoiceRegistryAbi = parseAbi([
+  "function getInvoice(bytes32 invoiceId) view returns ((address vendor, address buyer, uint128 amount, uint64 issuedAt, uint64 dueAt, uint64 settledAt, bytes32 metadataHash, uint8 status))"
+]);
 
-async function main(): Promise<void> {
-  if (!config.settlementRouterAddress) {
-    throw new Error("Missing SETTLEMENT_ROUTER_ADDRESS in environment");
+function requiredAddress(value: string | undefined, name: string) {
+  if (!value) throw new Error(`Missing ${name} in environment`);
+  return getAddress(value);
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function log(
+  level: "info" | "error",
+  event: string,
+  details: Record<string, unknown> = {}
+) {
+  const output = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    level,
+    event,
+    ...details
+  });
+  if (level === "error") console.error(output);
+  else console.log(output);
+}
+
+function paymentDetails(payment: InvoicePayment) {
+  return {
+    transactionHash: payment.transactionHash,
+    blockNumber: payment.blockNumber.toString(),
+    invoiceId: payment.invoiceId,
+    payer: payment.payer,
+    vendor: payment.vendor,
+    amount: payment.amount.toString()
+  };
+}
+
+function minBlock(left: bigint, right: bigint) {
+  return left < right ? left : right;
+}
+
+function blockArgument(name: "--from-block" | "--to-block"): bigint | undefined {
+  const index = process.argv.indexOf(name);
+  if (index === -1) return undefined;
+  const value = process.argv[index + 1];
+  if (!value || !/^\d+$/.test(value)) {
+    throw new Error(`${name} requires a non-negative integer block number`);
   }
+  return BigInt(value);
+}
 
-  const routerAddress = getAddress(config.settlementRouterAddress);
-  const client = createPublicClient({
-    chain: sepolia,
-    transport: http(config.sepoliaRpcUrl)
-  });
+async function wait(delayMs: number, signal: AbortSignal): Promise<void> {
+  if (signal.aborted) return;
 
-  console.log("Watching Sepolia for InvoicePaid");
-  console.log("SettlementRouter:", routerAddress);
-
-  const unwatch = client.watchContractEvent({
-    address: routerAddress,
-    abi: [paymentEvent],
-    eventName: "InvoicePaid",
-    onLogs: async (logs) => {
-      for (const log of logs) {
-        if (!log.transactionHash || log.blockNumber === null) continue;
-
-        const decoded = decodeEventLog({
-          abi: [paymentEvent],
-          data: log.data,
-          topics: log.topics
-        });
-        const args = decoded.args as {
-          invoiceId: `0x${string}`;
-          payer: `0x${string}`;
-          vendor: `0x${string}`;
-          amount: bigint;
-          paidAt: bigint;
-        };
-
-        console.log("Detected Sepolia invoice payment", {
-          txHash: log.transactionHash,
-          blockNumber: log.blockNumber.toString(),
-          invoiceId: args.invoiceId,
-          payer: args.payer,
-          vendor: args.vendor,
-          amount: args.amount.toString()
-        });
-
-        const proof = await buildProof({
-          txHash: log.transactionHash,
-          chainKey: config.sepoliaChainKey,
-          blockNumber: log.blockNumber
-        });
-        await submitSettlementToCreditcoin({ ...args, proof });
-      }
-    },
-    onError: (error) => console.error("Sepolia settlement watcher error", error)
-  });
-
-  process.on("SIGINT", () => {
-    unwatch();
-    process.exit(0);
+  await new Promise<void>((resolve) => {
+    const onAbort = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    const timeout = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
-void main();
+async function main(): Promise<void> {
+  const once = process.argv.includes("--once");
+  const dryRun = process.argv.includes("--dry-run");
+  const fromBlockOverride = blockArgument("--from-block");
+  const toBlockOverride = blockArgument("--to-block");
+  if ((fromBlockOverride !== undefined || toBlockOverride !== undefined) && !dryRun) {
+    throw new Error("Block-range overrides are allowed only with --dry-run");
+  }
+  if (toBlockOverride !== undefined && !once) {
+    throw new Error("--to-block requires --once");
+  }
+  if (
+    fromBlockOverride !== undefined &&
+    toBlockOverride !== undefined &&
+    fromBlockOverride > toBlockOverride
+  ) {
+    throw new Error("--from-block cannot be greater than --to-block");
+  }
+  const routerAddress = requiredAddress(
+    config.settlementRouterAddress,
+    "SETTLEMENT_ROUTER_ADDRESS"
+  );
+  const invoiceRegistryAddress = requiredAddress(
+    config.invoiceRegistryAddress,
+    "INVOICE_REGISTRY_ADDRESS"
+  );
+  if (!dryRun && !process.env.CREDITCOIN_PRIVATE_KEY) {
+    throw new Error("Missing CREDITCOIN_PRIVATE_KEY in environment");
+  }
+
+  const abortController = new AbortController();
+  const stop = () => abortController.abort(new Error("Settlement worker stopped"));
+  process.once("SIGINT", stop);
+  process.once("SIGTERM", stop);
+
+  const sepoliaClient = createPublicClient({
+    chain: sepolia,
+    transport: http(config.sepoliaRpcUrl)
+  });
+  const creditcoinChain = {
+    id: config.creditcoinChainId,
+    name: "Creditcoin Testnet",
+    nativeCurrency: { decimals: 18, name: "Creditcoin Testnet", symbol: "tCTC" },
+    rpcUrls: { default: { http: [config.creditcoinRpcUrl] } }
+  } as const;
+  const creditcoinClient = createPublicClient({
+    chain: creditcoinChain,
+    transport: http(config.creditcoinRpcUrl)
+  });
+
+  const queue = new SettlementQueue({
+    retryDelayMs: config.settlementRetryIntervalMs,
+    signal: abortController.signal,
+    process: async (payment) => {
+      const outcome = await processSettlement(
+        payment,
+        {
+          sourceChainKey: config.sepoliaChainKey,
+          readInvoice: async (invoiceId) => {
+            const invoice = await creditcoinClient.readContract({
+              address: invoiceRegistryAddress,
+              abi: invoiceRegistryAbi,
+              functionName: "getInvoice",
+              args: [invoiceId]
+            });
+            return {
+              vendor: getAddress(invoice.vendor),
+              buyer: getAddress(invoice.buyer),
+              amount: invoice.amount,
+              status: invoice.status
+            };
+          },
+          buildProof: (request, signal) => buildProof(request, { signal }),
+          submitSettlement: submitSettlementToCreditcoin,
+          onStage: (stage, currentPayment) =>
+            log("info", stage, paymentDetails(currentPayment))
+        },
+        { dryRun, signal: abortController.signal }
+      );
+
+      log("info", `payment-${outcome.kind}`, {
+        ...paymentDetails(payment),
+        ...(outcome.kind === "skipped" ? { reason: outcome.reason } : {}),
+        ...(outcome.kind === "submitted"
+          ? { creditcoinTxHash: outcome.creditcoinTxHash }
+          : {})
+      });
+      return outcome;
+    },
+    onRetry: (payment, error) =>
+      log("error", "payment-retry-scheduled", {
+        ...paymentDetails(payment),
+        retryDelayMs: config.settlementRetryIntervalMs,
+        error: errorMessage(error)
+      })
+  });
+
+  const cursor = dryRun
+    ? {
+        nextBlock: fromBlockOverride ?? config.settlementRouterDeploymentBlock,
+        restored: false
+      }
+    : await loadCursor({
+        filePath: config.settlementCursorFile,
+        chainId: sepolia.id,
+        routerAddress,
+        deploymentBlock: config.settlementRouterDeploymentBlock
+      });
+  let nextBlock = cursor.nextBlock;
+  let scanChunkSize = config.settlementScanChunkSize;
+  let caughtUpLogged = false;
+
+  log("info", "worker-started", {
+    routerAddress,
+    invoiceRegistryAddress,
+    deploymentBlock: nextBlock.toString(),
+    scanChunkSize: config.settlementScanChunkSize.toString(),
+    pollIntervalMs: config.settlementPollIntervalMs,
+    sourceChainKey: config.sepoliaChainKey,
+    toBlock: toBlockOverride?.toString() ?? null,
+    cursorFile: dryRun ? null : config.settlementCursorFile,
+    cursorRestored: cursor.restored,
+    once,
+    dryRun
+  });
+
+  while (!abortController.signal.aborted) {
+    try {
+      const networkLatestBlock = await sepoliaClient.getBlockNumber();
+      const latestBlock =
+        toBlockOverride === undefined
+          ? networkLatestBlock
+          : minBlock(toBlockOverride, networkLatestBlock);
+
+      while (nextBlock <= latestBlock && !abortController.signal.aborted) {
+        const toBlock = minBlock(nextBlock + scanChunkSize - 1n, latestBlock);
+        let logs;
+        try {
+          logs = await sepoliaClient.getLogs({
+            address: routerAddress,
+            event: paymentEvent,
+            fromBlock: nextBlock,
+            toBlock
+          });
+        } catch (error) {
+          if (scanChunkSize > 1n) {
+            const previousChunkSize = scanChunkSize;
+            scanChunkSize = scanChunkSize / 2n;
+            if (scanChunkSize < 1n) scanChunkSize = 1n;
+            log("error", "scan-range-reduced", {
+              previousChunkSize: previousChunkSize.toString(),
+              nextChunkSize: scanChunkSize.toString(),
+              error: errorMessage(error)
+            });
+            continue;
+          }
+          throw error;
+        }
+
+        log("info", "range-scanned", {
+          fromBlock: nextBlock.toString(),
+          toBlock: toBlock.toString(),
+          paymentsFound: logs.length
+        });
+
+        const rangeTasks: Array<Promise<unknown>> = [];
+        for (const eventLog of logs) {
+          let payment: InvoicePayment;
+          try {
+            payment = decodePaymentLog(eventLog);
+          } catch (error) {
+            log("error", "payment-log-rejected", {
+              transactionHash: eventLog.transactionHash,
+              error: errorMessage(error)
+            });
+            continue;
+          }
+
+          log("info", "payment-detected", paymentDetails(payment));
+          rangeTasks.push(queue.enqueue(payment));
+        }
+
+        await Promise.all(rangeTasks);
+        nextBlock = toBlock + 1n;
+        if (!dryRun) {
+          await saveCursor({
+            filePath: config.settlementCursorFile,
+            chainId: sepolia.id,
+            routerAddress,
+            nextBlock
+          });
+        }
+      }
+
+      if (once) {
+        await queue.drain();
+        return;
+      }
+
+      if (!caughtUpLogged) {
+        log("info", "worker-caught-up", {
+          nextBlock: nextBlock.toString()
+        });
+        caughtUpLogged = true;
+      }
+      await wait(config.settlementPollIntervalMs, abortController.signal);
+    } catch (error) {
+      if (abortController.signal.aborted) break;
+      log("error", "scan-retry-scheduled", {
+        nextBlock: nextBlock.toString(),
+        retryDelayMs: config.settlementRetryIntervalMs,
+        error: errorMessage(error)
+      });
+      await wait(config.settlementRetryIntervalMs, abortController.signal);
+    }
+  }
+
+  await queue.drain();
+  log("info", "worker-stopped");
+}
+
+void main().catch((error) => {
+  log("error", "worker-failed", { error: errorMessage(error) });
+  process.exitCode = 1;
+});

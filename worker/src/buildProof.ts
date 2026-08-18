@@ -37,8 +37,9 @@ type AttestedHeightResponse = {
   attestedHeight: number | null;
 };
 
-async function getJson<T>(url: string): Promise<T> {
+async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, {
+    signal,
     headers: {
       accept: "application/json"
     }
@@ -52,36 +53,65 @@ async function getJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function getAttestedHeight(chainKey: number): Promise<number | null> {
+export async function getAttestedHeight(
+  chainKey: number,
+  signal?: AbortSignal
+): Promise<number | null> {
   const url = `${config.proofApiUrl}/api/v1/attested-height/${chainKey}`;
-  const payload = await getJson<AttestedHeightResponse>(url);
+  const payload = await getJson<AttestedHeightResponse>(url, signal);
   return payload.attestedHeight;
+}
+
+async function wait(pollIntervalMs: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) throw signal.reason;
+
+  await new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timeout);
+      reject(signal?.reason ?? new Error("Proof wait aborted"));
+    };
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, pollIntervalMs);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 export async function waitUntilHeightAttested(
   chainKey: number,
   blockNumber: bigint,
-  pollIntervalMs = 15_000
+  pollIntervalMs = 15_000,
+  signal?: AbortSignal
 ): Promise<number> {
   for (;;) {
-    const attestedHeight = await getAttestedHeight(chainKey);
+    const attestedHeight = await getAttestedHeight(chainKey, signal);
     if (attestedHeight !== null && BigInt(attestedHeight) >= blockNumber) {
       return attestedHeight;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    await wait(pollIntervalMs, signal);
   }
 }
 
 export async function getProofByTx(
   chainKey: number,
-  txHash: string
+  txHash: string,
+  signal?: AbortSignal
 ): Promise<ProofByTxResponse> {
   const url = `${config.proofApiUrl}/api/v1/proof-by-tx/${chainKey}/${txHash}`;
-  return getJson<ProofByTxResponse>(url);
+  return getJson<ProofByTxResponse>(url, signal);
 }
 
-export async function buildProof(request: PendingProofRequest): Promise<ProofByTxResponse> {
-  await waitUntilHeightAttested(request.chainKey, request.blockNumber);
-  return getProofByTx(request.chainKey, request.txHash);
+export async function buildProof(
+  request: PendingProofRequest,
+  options: { signal?: AbortSignal } = {}
+): Promise<ProofByTxResponse> {
+  await waitUntilHeightAttested(
+    request.chainKey,
+    request.blockNumber,
+    15_000,
+    options.signal
+  );
+  return getProofByTx(request.chainKey, request.txHash, options.signal);
 }
