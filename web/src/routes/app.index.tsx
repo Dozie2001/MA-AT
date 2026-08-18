@@ -1,29 +1,37 @@
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
-  ClientOnly,
-  Link,
-  createFileRoute,
-  useNavigate,
-} from '@tanstack/react-router'
-import { ArrowRight, FilePlus2, Search, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
+  ArrowRight,
+  FilePlus2,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+} from 'lucide-react'
+import { useState } from 'react'
 import { isHex } from 'viem'
-import type { Hex } from 'viem'
-import { useConnection, useReadContracts } from 'wagmi'
+import type { Address, Hex } from 'viem'
+import {
+  useConnection,
+  useContractEvents,
+  useReadContract,
+  useReadContracts,
+} from 'wagmi'
 
 import { StatusPill } from '../components/status-pill'
 import {
   contracts,
   creditPolicyAbi,
   demoEvidence,
+  invoiceRegistryAbi,
+  invoiceStatuses,
   trustRegistryAbi,
   trustTiers,
 } from '../lib/contracts'
 import { formatTimestamp, formatUsdc, truncateAddress } from '../lib/format'
-import { getSavedInvoices } from '../lib/invoice-storage'
-import type { SavedInvoice } from '../lib/invoice-storage'
 import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/')({ component: Dashboard })
+
+const invoiceRegistryDeploymentBlock = 5_326_046n
 
 function parseInvoiceLocator(value: string): Hex | undefined {
   let candidate = value.trim()
@@ -46,10 +54,70 @@ function Dashboard() {
   const navigate = useNavigate({ from: '/app/' })
   const [lookup, setLookup] = useState('')
   const [lookupError, setLookupError] = useState<string>()
-  const [savedInvoices, setSavedInvoices] = useState<Array<SavedInvoice>>([])
   const address = connection.address
 
-  useEffect(() => setSavedInvoices(getSavedInvoices()), [])
+  const vendorInvoiceEvents = useContractEvents({
+    address: contracts.invoiceRegistry,
+    abi: invoiceRegistryAbi,
+    eventName: 'InvoiceCreated',
+    args: address ? { vendor: address } : undefined,
+    fromBlock: invoiceRegistryDeploymentBlock,
+    chainId: creditCoin3Testnet.id,
+    query: { enabled: Boolean(address) },
+  })
+  const buyerInvoiceEvents = useContractEvents({
+    address: contracts.invoiceRegistry,
+    abi: invoiceRegistryAbi,
+    eventName: 'InvoiceCreated',
+    args: address ? { buyer: address } : undefined,
+    fromBlock: invoiceRegistryDeploymentBlock,
+    chainId: creditCoin3Testnet.id,
+    query: { enabled: Boolean(address) },
+  })
+
+  const discoveredInvoices = [
+    ...(vendorInvoiceEvents.data ?? []).flatMap((event) =>
+      event.args.invoiceId
+        ? [
+            {
+              invoiceId: event.args.invoiceId,
+              role: 'Vendor' as const,
+              blockNumber: event.blockNumber,
+            },
+          ]
+        : [],
+    ),
+    ...(buyerInvoiceEvents.data ?? []).flatMap((event) =>
+      event.args.invoiceId
+        ? [
+            {
+              invoiceId: event.args.invoiceId,
+              role: 'Buyer' as const,
+              blockNumber: event.blockNumber,
+            },
+          ]
+        : [],
+    ),
+  ]
+    .filter(
+      (invoice, index, invoices) =>
+        invoices.findIndex(
+          (candidate) => candidate.invoiceId === invoice.invoiceId,
+        ) === index,
+    )
+    .sort((left, right) =>
+      left.blockNumber === right.blockNumber
+        ? 0
+        : left.blockNumber > right.blockNumber
+          ? -1
+          : 1,
+    )
+
+  const historyPending =
+    vendorInvoiceEvents.isPending || buyerInvoiceEvents.isPending
+  const historyFetching =
+    vendorInvoiceEvents.isFetching || buyerInvoiceEvents.isFetching
+  const historyError = vendorInvoiceEvents.error ?? buyerInvoiceEvents.error
 
   const trust = useReadContracts({
     allowFailure: false,
@@ -221,56 +289,91 @@ function Dashboard() {
           <section className="panel panel-spaced">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">SAVED IN THIS BROWSER</span>
-                <h2>Recent invoices</h2>
+                <span className="eyebrow">CREDITCOIN EVENT HISTORY</span>
+                <h2>Your invoices</h2>
                 <p>
-                  This is local convenience history, not an on-chain indexer.
+                  Created by or assigned to this wallet, reconstructed directly
+                  from InvoiceRegistry events.
                 </p>
               </div>
+              {address ? (
+                <button
+                  className="icon-button"
+                  type="button"
+                  onClick={() => {
+                    void vendorInvoiceEvents.refetch()
+                    void buyerInvoiceEvents.refetch()
+                  }}
+                  disabled={historyFetching}
+                  aria-label="Refresh invoice history"
+                >
+                  <RefreshCw size={16} />
+                </button>
+              ) : null}
             </div>
-            <ClientOnly fallback={<div className="loading-line" />}>
-              {savedInvoices.length ? (
-                <div className="invoice-list">
-                  {savedInvoices.map((invoice) => (
-                    <Link
-                      className="invoice-card"
-                      key={invoice.invoiceId}
-                      to="/app/invoices/$invoiceId"
-                      params={{ invoiceId: invoice.invoiceId }}
-                    >
-                      <div className="invoice-card-head">
-                        <h3>{truncateAddress(invoice.invoiceId, 10)}</h3>
-                        <StatusPill tone="warning">Open</StatusPill>
-                      </div>
-                      <dl>
-                        <div>
-                          <dt>Amount</dt>
-                          <dd>{invoice.amount} USDC</dd>
-                        </div>
-                        <div>
-                          <dt>Buyer</dt>
-                          <dd>{truncateAddress(invoice.buyer)}</dd>
-                        </div>
-                        <div>
-                          <dt>Due</dt>
-                          <dd>{formatTimestamp(BigInt(invoice.dueAt))}</dd>
-                        </div>
-                      </dl>
-                    </Link>
-                  ))}
+            {!address ? (
+              <div className="empty-state">
+                <div>
+                  <ShieldCheck size={30} />
+                  <strong>Connect a wallet to discover invoices</strong>
+                  <span>
+                    Ma'at queries both vendor and buyer event history for the
+                    connected address.
+                  </span>
                 </div>
-              ) : (
-                <div className="empty-state">
-                  <div>
-                    <FilePlus2 size={30} />
-                    <strong>No locally saved invoices</strong>
-                    <span>
-                      Create one from this browser or inspect the verified demo.
-                    </span>
-                  </div>
+              </div>
+            ) : historyPending ? (
+              <div className="invoice-list" aria-label="Loading invoices">
+                <InvoiceCardSkeleton />
+                <InvoiceCardSkeleton />
+              </div>
+            ) : historyError ? (
+              <div className="empty-state">
+                <div>
+                  <ShieldCheck size={30} />
+                  <strong>Could not load invoice history</strong>
+                  <span>{historyError.message.split('\n')[0]}</span>
+                  <button
+                    className="button-secondary empty-state-action"
+                    type="button"
+                    onClick={() => {
+                      void vendorInvoiceEvents.refetch()
+                      void buyerInvoiceEvents.refetch()
+                    }}
+                  >
+                    Try again
+                  </button>
                 </div>
-              )}
-            </ClientOnly>
+              </div>
+            ) : discoveredInvoices.length ? (
+              <div className="invoice-list">
+                {discoveredInvoices.map((invoice) => (
+                  <OnchainInvoiceCard
+                    key={invoice.invoiceId}
+                    invoiceId={invoice.invoiceId}
+                    role={invoice.role}
+                    viewer={address}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <div>
+                  <FilePlus2 size={30} />
+                  <strong>No invoices found for this wallet</strong>
+                  <span>
+                    Create an invoice or ask a vendor to assign this address as
+                    the buyer.
+                  </span>
+                  <Link
+                    className="button-secondary empty-state-action"
+                    to="/app/invoices/new"
+                  >
+                    Create invoice
+                  </Link>
+                </div>
+              </div>
+            )}
           </section>
         </div>
 
@@ -317,6 +420,97 @@ function Dashboard() {
         </aside>
       </div>
     </>
+  )
+}
+
+function OnchainInvoiceCard({
+  invoiceId,
+  role,
+  viewer,
+}: {
+  invoiceId: Hex
+  role: 'Vendor' | 'Buyer'
+  viewer: Address
+}) {
+  const invoiceQuery = useReadContract({
+    address: contracts.invoiceRegistry,
+    abi: invoiceRegistryAbi,
+    functionName: 'getInvoice',
+    args: [invoiceId],
+    chainId: creditCoin3Testnet.id,
+    query: { refetchInterval: 15_000 },
+  })
+
+  if (invoiceQuery.isPending) return <InvoiceCardSkeleton />
+
+  if (invoiceQuery.error) {
+    return (
+      <div className="invoice-card">
+        <div className="invoice-card-head">
+          <h3>{truncateAddress(invoiceId, 10)}</h3>
+          <StatusPill tone="danger">Read failed</StatusPill>
+        </div>
+        <button
+          className="text-button invoice-card-retry"
+          type="button"
+          onClick={() => void invoiceQuery.refetch()}
+        >
+          Retry current state
+        </button>
+      </div>
+    )
+  }
+
+  const invoice = invoiceQuery.data
+  const status = invoiceStatuses[invoice.status] ?? 'Unknown'
+  const counterparty = role === 'Vendor' ? invoice.buyer : invoice.vendor
+  const tone =
+    invoice.status === 2
+      ? 'success'
+      : invoice.status === 3
+        ? 'danger'
+        : 'warning'
+
+  return (
+    <Link
+      className="invoice-card"
+      to="/app/invoices/$invoiceId"
+      params={{ invoiceId }}
+    >
+      <div className="invoice-card-head">
+        <div>
+          <h3>{truncateAddress(invoiceId, 10)}</h3>
+          <span className="invoice-role">
+            {role} view · {invoice.vendor === viewer ? 'Issued' : 'Received'}
+          </span>
+        </div>
+        <StatusPill tone={tone}>{status}</StatusPill>
+      </div>
+      <dl>
+        <div>
+          <dt>Amount</dt>
+          <dd>{formatUsdc(invoice.amount)} USDC</dd>
+        </div>
+        <div>
+          <dt>Counterparty</dt>
+          <dd>{truncateAddress(counterparty)}</dd>
+        </div>
+        <div>
+          <dt>Due</dt>
+          <dd>{formatTimestamp(invoice.dueAt)}</dd>
+        </div>
+      </dl>
+    </Link>
+  )
+}
+
+function InvoiceCardSkeleton() {
+  return (
+    <div className="invoice-card invoice-card-skeleton" aria-hidden="true">
+      <div className="loading-line" />
+      <div className="loading-line" />
+      <div className="loading-line" />
+    </div>
   )
 }
 

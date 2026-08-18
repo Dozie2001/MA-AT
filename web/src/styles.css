@@ -774,6 +774,16 @@ button:disabled,
   font-weight: 650;
 }
 
+.invoice-role {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .invoice-card dl,
 .detail-grid {
   display: grid;
@@ -820,6 +830,32 @@ button:disabled,
   display: block;
   margin-bottom: 5px;
   color: var(--foreground);
+}
+
+.empty-state-action {
+  width: fit-content;
+  margin: 18px auto 0;
+}
+
+.invoice-card-retry {
+  margin-top: 18px;
+}
+
+.invoice-card-skeleton {
+  min-height: 135px;
+}
+
+.invoice-card-skeleton .loading-line:first-child {
+  width: 42%;
+}
+
+.invoice-card-skeleton .loading-line:nth-child(2) {
+  width: 75%;
+  margin-top: 24px;
+}
+
+.invoice-card-skeleton .loading-line:last-child {
+  width: 58%;
 }
 
 .lookup-form {

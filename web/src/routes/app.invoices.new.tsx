@@ -27,7 +27,6 @@ import { InvoiceShareActions } from '../components/invoice-share-actions'
 import { StatusPill } from '../components/status-pill'
 import { contracts, invoiceRegistryAbi, usdcIconUrl } from '../lib/contracts'
 import { errorMessage, explorerTransaction } from '../lib/format'
-import { saveInvoice } from '../lib/invoice-storage'
 import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/invoices/new')({
@@ -37,7 +36,6 @@ export const Route = createFileRoute('/app/invoices/new')({
 interface SubmittedInvoice {
   buyer: Address
   amountBaseUnits: bigint
-  amountDisplay: string
   dueAt: number
   metadataHash: Hex
 }
@@ -93,15 +91,6 @@ function NewInvoice() {
           return
         }
         setInvoiceId(decoded.args.invoiceId)
-        saveInvoice({
-          invoiceId: decoded.args.invoiceId,
-          vendor: connection.address,
-          buyer: submitted.buyer,
-          amount: submitted.amountDisplay,
-          dueAt: submitted.dueAt,
-          createTx: receipt.data.transactionHash,
-          savedAt: Date.now(),
-        })
         return
       } catch {
         continue
@@ -162,7 +151,6 @@ function NewInvoice() {
     const terms = {
       buyer: normalizedBuyer,
       amountBaseUnits,
-      amountDisplay: amount,
       dueAt: dueTimestamp,
       metadataHash,
     }
