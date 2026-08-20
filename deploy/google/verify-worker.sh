@@ -17,7 +17,13 @@ runuser --user maat -- env HOME="${STATE_DIR}" PATH="${SAFE_PATH}" node --check 
 
 git -C "${APP_DIR}" diff --exit-code -- worker
 
-unsafe_path="$(find "${WORKER_DIR}" -xdev -perm /022 -print -quit)"
+unsafe_path="$(
+  find "${WORKER_DIR}" -xdev \
+    \( -type f -o -type d \) \
+    -perm /022 \
+    -print \
+    -quit
+)"
 if [[ -n "${unsafe_path}" ]]; then
   printf 'Deployed worker path is group- or world-writable: %s\n' "${unsafe_path}" >&2
   exit 1
