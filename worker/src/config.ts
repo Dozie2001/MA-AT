@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import dotenv from "dotenv";
 
+import { parseRpcUrls } from "./rpcSafety.js";
+
 const configFilePath = fileURLToPath(import.meta.url);
 const configDir = path.dirname(configFilePath);
 dotenv.config({ path: path.resolve(configDir, "../../.env") });
@@ -29,8 +31,17 @@ function positiveBigInt(name: string, fallback: string): bigint {
   return value;
 }
 
+const sepoliaRpcUrl = requireEnv("SEPOLIA_RPC_URL");
+
 export const config = {
-  sepoliaRpcUrl: requireEnv("SEPOLIA_RPC_URL"),
+  sepoliaRpcUrl,
+  sepoliaRpcUrls: parseRpcUrls(
+    sepoliaRpcUrl,
+    [
+      process.env.SEPOLIA_FALLBACK_RPC_URL_1,
+      process.env.SEPOLIA_FALLBACK_RPC_URL_2,
+    ],
+  ),
   creditcoinRpcUrl: requireEnv("CREDITCOIN_RPC_URL"),
   creditcoinWsUrl: process.env.CREDITCOIN_WS_URL ?? "wss://rpc.cc3-testnet.creditcoin.network",
   creditcoinChainId: positiveInteger("CREDITCOIN_CHAIN_ID", "102031"),
@@ -41,8 +52,13 @@ export const config = {
     "11508491"
   ),
   settlementScanChunkSize: positiveBigInt("SETTLEMENT_SCAN_CHUNK_SIZE", "10"),
+  settlementScanIntervalMs: positiveInteger("SETTLEMENT_SCAN_INTERVAL_MS", "1000"),
   settlementPollIntervalMs: positiveInteger("SETTLEMENT_POLL_INTERVAL_MS", "15000"),
   settlementRetryIntervalMs: positiveInteger("SETTLEMENT_RETRY_INTERVAL_MS", "30000"),
+  settlementRetryMaxIntervalMs: positiveInteger(
+    "SETTLEMENT_RETRY_MAX_INTERVAL_MS",
+    "300000",
+  ),
   settlementCursorFile:
     process.env.SETTLEMENT_CURSOR_FILE ??
     path.resolve(configDir, "../.data/settlement-cursor.json"),

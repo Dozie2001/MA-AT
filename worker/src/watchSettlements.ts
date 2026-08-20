@@ -1,4 +1,4 @@
-import { createPublicClient, getAddress, http, parseAbi } from "viem";
+import { createPublicClient, fallback, getAddress, http, parseAbi } from "viem";
 import type { Hex } from "viem";
 import { sepolia } from "viem/chains";
 
@@ -8,6 +8,11 @@ import { loadCursor, saveCursor } from "./cursorStore.js";
 import { decodePaymentLog, paymentEvent } from "./payment.js";
 import type { InvoicePayment } from "./payment.js";
 import { processSettlement } from "./processSettlement.js";
+import {
+  exponentialBackoffMs,
+  isRateLimitError,
+  safeErrorMessage,
+} from "./rpcSafety.js";
 import { SettlementQueue } from "./settlementQueue.js";
 import { submitSettlementToCreditcoin } from "./submitSettlementToCreditcoin.js";
 
@@ -18,10 +23,6 @@ const invoiceRegistryAbi = parseAbi([
 function requiredAddress(value: string | undefined, name: string) {
   if (!value) throw new Error(`Missing ${name} in environment`);
   return getAddress(value);
-}
-
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function log(
@@ -115,9 +116,15 @@ async function main(): Promise<void> {
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
 
+  const sepoliaTransports = config.sepoliaRpcUrls.map((url) =>
+    http(url, { retryCount: 0 })
+  );
   const sepoliaClient = createPublicClient({
     chain: sepolia,
-    transport: http(config.sepoliaRpcUrl)
+    transport:
+      sepoliaTransports.length === 1
+        ? sepoliaTransports[0]
+        : fallback(sepoliaTransports, { retryCount: 0 })
   });
   const creditcoinChain = {
     id: config.creditcoinChainId,
@@ -173,7 +180,7 @@ async function main(): Promise<void> {
       log("error", "payment-retry-scheduled", {
         ...paymentDetails(payment),
         retryDelayMs: config.settlementRetryIntervalMs,
-        error: errorMessage(error)
+        error: safeErrorMessage(error)
       })
   });
 
@@ -190,6 +197,7 @@ async function main(): Promise<void> {
       });
   let nextBlock = cursor.nextBlock;
   let scanChunkSize = config.settlementScanChunkSize;
+  let consecutiveScanFailures = 0;
   let caughtUpLogged = false;
 
   log("info", "worker-started", {
@@ -197,6 +205,8 @@ async function main(): Promise<void> {
     invoiceRegistryAddress,
     deploymentBlock: nextBlock.toString(),
     scanChunkSize: config.settlementScanChunkSize.toString(),
+    scanIntervalMs: config.settlementScanIntervalMs,
+    rpcEndpointCount: config.sepoliaRpcUrls.length,
     pollIntervalMs: config.settlementPollIntervalMs,
     sourceChainKey: config.sepoliaChainKey,
     toBlock: toBlockOverride?.toString() ?? null,
@@ -225,6 +235,7 @@ async function main(): Promise<void> {
             toBlock
           });
         } catch (error) {
+          if (isRateLimitError(error)) throw error;
           if (scanChunkSize > 1n) {
             const previousChunkSize = scanChunkSize;
             scanChunkSize = scanChunkSize / 2n;
@@ -232,12 +243,14 @@ async function main(): Promise<void> {
             log("error", "scan-range-reduced", {
               previousChunkSize: previousChunkSize.toString(),
               nextChunkSize: scanChunkSize.toString(),
-              error: errorMessage(error)
+              error: safeErrorMessage(error)
             });
             continue;
           }
           throw error;
         }
+
+        consecutiveScanFailures = 0;
 
         log("info", "range-scanned", {
           fromBlock: nextBlock.toString(),
@@ -253,7 +266,7 @@ async function main(): Promise<void> {
           } catch (error) {
             log("error", "payment-log-rejected", {
               transactionHash: eventLog.transactionHash,
-              error: errorMessage(error)
+              error: safeErrorMessage(error)
             });
             continue;
           }
@@ -272,6 +285,9 @@ async function main(): Promise<void> {
             nextBlock
           });
         }
+        if (nextBlock <= latestBlock) {
+          await wait(config.settlementScanIntervalMs, abortController.signal);
+        }
       }
 
       if (once) {
@@ -288,12 +304,20 @@ async function main(): Promise<void> {
       await wait(config.settlementPollIntervalMs, abortController.signal);
     } catch (error) {
       if (abortController.signal.aborted) break;
+      consecutiveScanFailures += 1;
+      const retryDelayMs = exponentialBackoffMs(
+        config.settlementRetryIntervalMs,
+        consecutiveScanFailures,
+        config.settlementRetryMaxIntervalMs
+      );
       log("error", "scan-retry-scheduled", {
         nextBlock: nextBlock.toString(),
-        retryDelayMs: config.settlementRetryIntervalMs,
-        error: errorMessage(error)
+        retryDelayMs,
+        failureCount: consecutiveScanFailures,
+        rateLimited: isRateLimitError(error),
+        error: safeErrorMessage(error)
       });
-      await wait(config.settlementRetryIntervalMs, abortController.signal);
+      await wait(retryDelayMs, abortController.signal);
     }
   }
 
@@ -302,6 +326,6 @@ async function main(): Promise<void> {
 }
 
 void main().catch((error) => {
-  log("error", "worker-failed", { error: errorMessage(error) });
+  log("error", "worker-failed", { error: safeErrorMessage(error) });
   process.exitCode = 1;
 });
