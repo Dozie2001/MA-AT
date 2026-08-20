@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "chainlink-for-agents": {
+      "source": "smartcontractkit/chainlink-for-agents",
+      "sourceType": "github",
+      "skillPath": "chainlink-for-agents/SKILL.md",
+      "computedHash": "8af5dda1e1cec50570c558c37663a7e7a8e6f779e926b22ab8a413b52be93466"
+    },
+    "hardhat": {
+      "source": "nomicfoundation/hardhat-skills",
+      "sourceType": "github",
+      "skillPath": "skills/hardhat/SKILL.md",
+      "computedHash": "6a28b7ffc9e215a40b83b46b59fbb81f89e9a472218468df18ae0f042c52b608"
+    }
+  }
+}

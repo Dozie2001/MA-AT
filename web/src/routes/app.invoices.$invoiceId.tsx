@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -11,7 +12,6 @@ import { useEffect } from 'react'
 import { isHex } from 'viem'
 import {
   useConnection,
-  useContractEvents,
   useReadContract,
   useReadContracts,
   useSwitchChain,
@@ -41,8 +41,7 @@ import {
   truncateAddress,
 } from '../lib/format'
 import { creditCoin3Testnet, sepolia } from '../lib/web3'
-
-const settlementRouterDeploymentBlock = 11_508_491n
+import { getInvoicePaymentHistory } from '../lib/payment-history'
 
 export const Route = createFileRoute('/app/invoices/$invoiceId')({
   component: InvoiceDetail,
@@ -79,21 +78,19 @@ function InvoiceDetail() {
     invoice && connection.address && invoice.vendor === connection.address,
   )
 
-  const sourcePayments = useContractEvents({
-    address: contracts.settlementRouter,
-    abi: settlementRouterAbi,
-    eventName: 'InvoicePaid',
-    args: invoiceId ? { invoiceId } : undefined,
-    fromBlock: settlementRouterDeploymentBlock,
-    chainId: sepolia.id,
-    query: { enabled: Boolean(invoiceId) },
+  const sourcePayments = useQuery({
+    queryKey: ['invoice-payment-history', invoiceId],
+    queryFn: () =>
+      getInvoicePaymentHistory({ data: { invoiceId: invoiceId! } }),
+    enabled: Boolean(invoiceId),
+    refetchInterval: isOpen ? 15_000 : false,
   })
   const matchingPayment = sourcePayments.data?.find(
     (log) =>
       invoice &&
-      log.args.payer === invoice.buyer &&
-      log.args.vendor === invoice.vendor &&
-      log.args.amount === invoice.amount,
+      log.payer === invoice.buyer &&
+      log.vendor === invoice.vendor &&
+      BigInt(log.amount) === invoice.amount,
   )
 
   const allowance = useReadContract({
