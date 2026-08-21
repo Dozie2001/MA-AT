@@ -7,6 +7,7 @@ const settlementRouterDeploymentBlock = '11508491'
 const sepoliaChainId = '11155111'
 
 type ExplorerLog = {
+  blockNumber: `0x${string}`
   data: `0x${string}`
   topics: [`0x${string}`, ...Array<`0x${string}`>]
   transactionHash: `0x${string}`
@@ -116,6 +117,7 @@ export const getInvoicePaymentHistory = createServerFn({ method: 'GET' })
         throw new Error('Payment history returned an unexpected invoice')
       }
       return {
+        blockNumber: BigInt(log.blockNumber).toString(),
         transactionHash: log.transactionHash,
         invoiceId: decoded.args.invoiceId,
         payer: decoded.args.payer,

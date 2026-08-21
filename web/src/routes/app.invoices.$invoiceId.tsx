@@ -4,7 +4,9 @@ import {
   ArrowLeft,
   BadgeCheck,
   Clock3,
+  Download,
   ExternalLink,
+  RefreshCw,
   ShieldAlert,
   Wallet,
 } from 'lucide-react'
@@ -21,6 +23,7 @@ import {
 
 import { InvoiceShareActions } from '../components/invoice-share-actions'
 import { StatusPill } from '../components/status-pill'
+import { getAttestcoinProofReceipt } from '../lib/attestcoin-proof'
 import {
   contracts,
   creditPolicyAbi,
@@ -92,6 +95,16 @@ function InvoiceDetail() {
       log.vendor === invoice.vendor &&
       BigInt(log.amount) === invoice.amount,
   )
+
+  const proofReceipt = useQuery({
+    queryKey: ['attestcoin-proof-receipt', matchingPayment?.transactionHash],
+    queryFn: () =>
+      getAttestcoinProofReceipt({
+        data: { transactionHash: matchingPayment!.transactionHash },
+      }),
+    enabled: Boolean(matchingPayment?.transactionHash),
+    refetchInterval: isOpen ? 15_000 : false,
+  })
 
   const allowance = useReadContract({
     address: contracts.sepoliaUsdc,
@@ -241,6 +254,41 @@ function InvoiceDetail() {
     }
   }
 
+  function downloadProofReceipt() {
+    if (!invoice || !matchingPayment || !proofReceipt.data?.available) return
+
+    const receipt = {
+      schema: 'maat.attestcoin-proof-receipt.v1',
+      invoice: {
+        id: invoiceId,
+        vendor: invoice.vendor,
+        buyer: invoice.buyer,
+        amountUsdcBaseUnits: invoice.amount.toString(),
+        dueAt: invoice.dueAt.toString(),
+        settledAt: invoice.settledAt.toString(),
+        status: invoiceStatuses[invoice.status],
+      },
+      sourcePayment: matchingPayment,
+      attestcoinProof: proofReceipt.data,
+      creditcoin: {
+        chainId: creditCoin3Testnet.id,
+        invoiceRegistry: contracts.invoiceRegistry,
+        settlementVerifier: contracts.settlementVerifier,
+        settled: invoice.status === 2,
+      },
+    }
+    const blobUrl = URL.createObjectURL(
+      new Blob([JSON.stringify(receipt, null, 2)], {
+        type: 'application/json',
+      }),
+    )
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = `maat-proof-${invoiceId.slice(2, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(blobUrl)
+  }
+
   if (!invoiceId) {
     return (
       <InvalidInvoice message="The route does not contain a valid 32-byte invoice ID." />
@@ -281,6 +329,8 @@ function InvoiceDetail() {
   const approved = currentAllowance >= invoice.amount
   const paymentPending = pay.isPending || paymentReceipt.isLoading
   const alreadyPaid = Boolean(matchingPayment || paymentReceipt.isSuccess)
+  const proofAvailable = proofReceipt.data?.available === true
+  const proofAccepted = proofAvailable || invoice.status === 2
 
   return (
     <>
@@ -400,7 +450,7 @@ function InvoiceDetail() {
                 </p>
               </div>
             </div>
-            <div className="proof-stack horizontal-proof">
+            <div className="proof-stack horizontal-proof" aria-live="polite">
               <div className="proof-step complete">
                 <span className="proof-dot">1</span>
                 <div className="proof-copy">
@@ -409,7 +459,7 @@ function InvoiceDetail() {
                 </div>
               </div>
               <div
-                className={`proof-step ${alreadyPaid || invoice.status === 2 ? 'complete' : ''}`}
+                className={`proof-step ${alreadyPaid || invoice.status === 2 ? 'complete' : 'active'}`}
               >
                 <span className="proof-dot">2</span>
                 <div className="proof-copy">
@@ -434,22 +484,151 @@ function InvoiceDetail() {
                 </div>
               </div>
               <div
-                className={`proof-step ${invoice.status === 2 ? 'complete' : ''}`}
+                className={`proof-step ${proofAccepted ? 'complete' : alreadyPaid ? 'active' : ''}`}
               >
                 <span className="proof-dot">3</span>
                 <div className="proof-copy">
                   <strong>
                     {invoice.status === 2
-                      ? 'Attestcoin accepted'
-                      : alreadyPaid
-                        ? 'Proof worker pending'
-                        : 'Attestation follows payment'}
+                      ? 'Attestcoin proof accepted'
+                      : proofAvailable
+                        ? 'Attestcoin proof generated'
+                        : alreadyPaid
+                          ? 'Waiting for attested proof'
+                          : 'Attestation follows payment'}
                   </strong>
-                  <span>Creditcoin atomic settlement</span>
+                  <span>
+                    {proofAvailable
+                      ? `Height ${proofReceipt.data.headerNumber} · tx index ${proofReceipt.data.txIndex}`
+                      : 'Decentralized source-chain verification'}
+                  </span>
+                </div>
+              </div>
+              <div
+                className={`proof-step ${invoice.status === 2 ? 'complete' : proofAvailable ? 'active' : ''}`}
+              >
+                <span className="proof-dot">4</span>
+                <div className="proof-copy">
+                  <strong>
+                    {invoice.status === 2
+                      ? 'Invoice and trust updated'
+                      : proofAvailable
+                        ? 'Awaiting Creditcoin submission'
+                        : 'Settlement follows verification'}
+                  </strong>
+                  <span>Atomic Creditcoin business logic</span>
                 </div>
               </div>
             </div>
           </section>
+
+          {matchingPayment ? (
+            <section className="panel panel-spaced proof-receipt">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">ATTESTCOIN EVIDENCE</span>
+                  <h2>Proof receipt</h2>
+                  <p>
+                    Verifiable metadata returned for the exact Sepolia payment
+                    transaction.
+                  </p>
+                </div>
+                <StatusPill
+                  tone={
+                    proofReceipt.error
+                      ? 'danger'
+                      : proofAvailable
+                        ? 'success'
+                        : 'warning'
+                  }
+                >
+                  {proofReceipt.error
+                    ? 'Unavailable'
+                    : proofAvailable
+                      ? invoice.status === 2
+                        ? 'Accepted'
+                        : 'Generated'
+                      : 'Pending'}
+                </StatusPill>
+              </div>
+
+              {proofReceipt.isPending ? (
+                <div>
+                  <div className="loading-line" />
+                  <div className="loading-line" />
+                </div>
+              ) : proofReceipt.error ? (
+                <div className="inline-notice danger">
+                  Attestcoin receipt lookup failed:{' '}
+                  {errorMessage(proofReceipt.error)}
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => void proofReceipt.refetch()}
+                  >
+                    <RefreshCw size={14} /> Retry receipt
+                  </button>
+                </div>
+              ) : proofReceipt.data.available ? (
+                <>
+                  <div className="receipt-grid">
+                    <div>
+                      <span>Source chain key</span>
+                      <strong>{proofReceipt.data.chainKey} · Sepolia</strong>
+                    </div>
+                    <div>
+                      <span>Attested height</span>
+                      <strong>{proofReceipt.data.headerNumber}</strong>
+                    </div>
+                    <div>
+                      <span>Transaction index</span>
+                      <strong>{proofReceipt.data.txIndex}</strong>
+                    </div>
+                    <div>
+                      <span>Proof structure</span>
+                      <strong>
+                        {proofReceipt.data.merkleSiblingCount} siblings ·{' '}
+                        {proofReceipt.data.continuityRootCount} roots
+                      </strong>
+                    </div>
+                    <div className="wide">
+                      <span>Merkle root</span>
+                      <code>{proofReceipt.data.merkleRoot}</code>
+                    </div>
+                    <div className="wide">
+                      <span>Continuity lower endpoint</span>
+                      <code>{proofReceipt.data.lowerEndpointDigest}</code>
+                    </div>
+                  </div>
+                  <div className="receipt-actions">
+                    <a
+                      className="button-secondary"
+                      href={explorerTransaction(
+                        sepolia.blockExplorers.default.url,
+                        matchingPayment.transactionHash,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Source transaction <ExternalLink size={14} />
+                    </a>
+                    <button
+                      className="button-ghost"
+                      type="button"
+                      onClick={downloadProofReceipt}
+                    >
+                      <Download size={14} /> Download JSON receipt
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="inline-notice">
+                  The payment is final on Sepolia. Ma'at checks every 15 seconds
+                  until Attestcoin publishes its proof.
+                </div>
+              )}
+            </section>
+          ) : null}
 
           <section className="panel panel-spaced">
             <div className="panel-heading">

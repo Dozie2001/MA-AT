@@ -753,6 +753,80 @@ button:disabled,
   font-size: 9px;
 }
 
+.proof-step.active .proof-dot {
+  border-color: var(--ornament);
+  color: var(--ornament);
+  box-shadow: 0 0 0 4px color-mix(in oklch, var(--ornament), transparent 88%);
+}
+
+.proof-step.active .proof-copy strong {
+  color: var(--ornament);
+}
+
+.proof-receipt {
+  position: relative;
+  overflow: hidden;
+}
+
+.proof-receipt::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--ornament));
+  content: '';
+}
+
+.receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--border-soft);
+}
+
+.receipt-grid > div {
+  min-width: 0;
+  padding: 14px;
+  background: var(--card);
+}
+
+.receipt-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.receipt-grid span,
+.receipt-grid strong,
+.receipt-grid code {
+  display: block;
+}
+
+.receipt-grid span {
+  margin-bottom: 6px;
+  color: var(--muted-foreground);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.receipt-grid strong,
+.receipt-grid code {
+  color: var(--foreground);
+  font-family: var(--mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
 .invoice-list {
   display: grid;
   gap: 10px;
@@ -967,7 +1041,7 @@ button:disabled,
   font-size: 11px;
 }
 
-.transaction-state a {
+.transaction-state a:not(.button-primary) {
   color: var(--primary);
   font-family: var(--mono);
   font-size: 9px;
@@ -1966,6 +2040,12 @@ button:disabled,
     grid-template-columns: 1fr;
   }
   .detail-grid .wide {
+    grid-column: auto;
+  }
+  .receipt-grid {
+    grid-template-columns: 1fr;
+  }
+  .receipt-grid .wide {
     grid-column: auto;
   }
   .form-actions {
