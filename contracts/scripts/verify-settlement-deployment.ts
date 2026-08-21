@@ -84,7 +84,8 @@ async function main(): Promise<void> {
       "function invoiceRegistry() view returns (address)",
       "function trustRegistry() view returns (address)",
       "function sourceChainKey() view returns (uint64)",
-      "function sourceRouter() view returns (address)"
+      "function sourceRouter() view returns (address)",
+      "function MAX_BATCH_SIZE() view returns (uint256)"
     ],
     creditcoinProvider
   );
@@ -105,6 +106,7 @@ async function main(): Promise<void> {
     verifierTrustRegistry,
     sourceChainKey,
     sourceRouter,
+    maxBatchSize,
     policyTrustRegistry
   ] = await Promise.all([
     router.usdc(),
@@ -117,6 +119,7 @@ async function main(): Promise<void> {
     verifier.trustRegistry(),
     verifier.sourceChainKey(),
     verifier.sourceRouter(),
+    verifier.MAX_BATCH_SIZE(),
     policy.trustRegistry()
   ]);
 
@@ -137,7 +140,8 @@ async function main(): Promise<void> {
     getAddress(verifierInvoiceRegistry as string) !== invoiceRegistryAddress ||
     getAddress(verifierTrustRegistry as string) !== trustRegistryAddress ||
     sourceChainKey !== SEPOLIA_ATTESTCOIN_CHAIN_KEY ||
-    getAddress(sourceRouter as string) !== routerAddress
+    getAddress(sourceRouter as string) !== routerAddress ||
+    maxBatchSize !== 10n
   ) {
     throw new Error("MaatSettlementVerifier immutable binding is inconsistent");
   }
@@ -161,7 +165,8 @@ async function main(): Promise<void> {
           address: verifierAddress,
           nativeVerifier: VERIFIER_PRECOMPILE,
           sourceChainKey: sourceChainKey.toString(),
-          sourceRouter: getAddress(sourceRouter as string)
+          sourceRouter: getAddress(sourceRouter as string),
+          maxBatchSize: maxBatchSize.toString()
         },
         creditPolicy: policyAddress,
         creditcoinExplorer: `https://creditcoin-testnet.blockscout.com/address/${verifierAddress}`,

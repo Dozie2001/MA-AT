@@ -9,6 +9,8 @@ import {IAttestcoinQueryVerifier} from "./interfaces/IAttestcoinQueryVerifier.so
 contract MaatSettlementVerifier {
     using AttestedPaymentDecoder for bytes;
 
+    uint256 public constant MAX_BATCH_SIZE = 10;
+
     IAttestcoinQueryVerifier public constant VERIFIER =
         IAttestcoinQueryVerifier(0x0000000000000000000000000000000000000FD2);
 
@@ -22,6 +24,9 @@ contract MaatSettlementVerifier {
     error InvalidTrustRegistry();
     error InvalidSourceRouter();
     error UnexpectedSourceChain();
+    error InvalidBatchSize();
+    error BatchLengthMismatch();
+    error DuplicateBatchQuery();
     error QueryAlreadyProcessed();
     error ProofVerificationFailed();
 
@@ -35,6 +40,11 @@ contract MaatSettlementVerifier {
         uint256 amount,
         uint256 paidAt,
         bool onTime
+    );
+    event SettlementBatchAccepted(
+        uint64 indexed chainKey,
+        bytes32 indexed batchId,
+        uint256 settlementCount
     );
 
     constructor(
@@ -75,6 +85,76 @@ contract MaatSettlementVerifier {
         );
         if (!verified) revert ProofVerificationFailed();
 
+        _acceptSettlement(chainKey, height, txIndex, queryKey, encodedTransaction);
+        return true;
+    }
+
+    function submitVerifiedSettlementBatch(
+        uint64 chainKey,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTransactions,
+        IAttestcoinQueryVerifier.MerkleProof[] calldata merkleProofs,
+        IAttestcoinQueryVerifier.ContinuityProof calldata sharedContinuityProof
+    ) external returns (bool) {
+        if (chainKey != sourceChainKey) revert UnexpectedSourceChain();
+
+        uint256 batchSize = heights.length;
+        if (batchSize < 2 || batchSize > MAX_BATCH_SIZE) revert InvalidBatchSize();
+        if (
+            encodedTransactions.length != batchSize ||
+            merkleProofs.length != batchSize
+        ) revert BatchLengthMismatch();
+
+        uint64[] memory txIndexes = new uint64[](batchSize);
+        bytes32[] memory queryKeys = new bytes32[](batchSize);
+        for (uint256 i = 0; i < batchSize; i++) {
+            uint64 txIndex = VERIFIER.calculateTxIndex(merkleProofs[i]);
+            bytes32 queryKey = keccak256(
+                abi.encodePacked(chainKey, heights[i], txIndex)
+            );
+            if (processedQueries[queryKey]) revert QueryAlreadyProcessed();
+
+            for (uint256 j = 0; j < i; j++) {
+                if (queryKeys[j] == queryKey) revert DuplicateBatchQuery();
+            }
+            txIndexes[i] = txIndex;
+            queryKeys[i] = queryKey;
+        }
+
+        bool verified = VERIFIER.verify(
+            chainKey,
+            heights,
+            encodedTransactions,
+            merkleProofs,
+            sharedContinuityProof
+        );
+        if (!verified) revert ProofVerificationFailed();
+
+        for (uint256 i = 0; i < batchSize; i++) {
+            _acceptSettlement(
+                chainKey,
+                heights[i],
+                txIndexes[i],
+                queryKeys[i],
+                encodedTransactions[i]
+            );
+        }
+
+        emit SettlementBatchAccepted(
+            chainKey,
+            keccak256(abi.encode(queryKeys)),
+            batchSize
+        );
+        return true;
+    }
+
+    function _acceptSettlement(
+        uint64 chainKey,
+        uint64 height,
+        uint64 txIndex,
+        bytes32 queryKey,
+        bytes calldata encodedTransaction
+    ) private {
         AttestedPaymentDecoder.Payment memory payment = encodedTransaction.decode(sourceRouter);
 
         processedQueries[queryKey] = true;
@@ -105,6 +185,5 @@ contract MaatSettlementVerifier {
             payment.paidAt,
             onTime
         );
-        return true;
     }
 }

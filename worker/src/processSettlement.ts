@@ -11,20 +11,19 @@ export type InvoiceSnapshot = {
   status: number;
 };
 
+export type SettlementSkipReason =
+  | "invoice-not-found"
+  | "invoice-settled"
+  | "invoice-cancelled"
+  | "invoice-not-open"
+  | "payer-mismatch"
+  | "vendor-mismatch"
+  | "amount-mismatch";
+
 export type SettlementOutcome =
   | { kind: "submitted"; creditcoinTxHash: Hex }
   | { kind: "ready" }
-  | {
-      kind: "skipped";
-      reason:
-        | "invoice-not-found"
-        | "invoice-settled"
-        | "invoice-cancelled"
-        | "invoice-not-open"
-        | "payer-mismatch"
-        | "vendor-mismatch"
-        | "amount-mismatch";
-    };
+  | { kind: "skipped"; reason: SettlementSkipReason };
 
 export type SettlementStage =
   | "invoice-validated"
@@ -50,34 +49,28 @@ export type SettlementDependencies = {
   onStage?: (stage: SettlementStage, payment: InvoicePayment) => void;
 };
 
+export function validatePaymentAgainstInvoice(
+  payment: InvoicePayment,
+  invoice: InvoiceSnapshot
+): SettlementSkipReason | null {
+  if (invoice.status === 0) return "invoice-not-found";
+  if (invoice.status === 2) return "invoice-settled";
+  if (invoice.status === 3) return "invoice-cancelled";
+  if (invoice.status !== 1) return "invoice-not-open";
+  if (getAddress(invoice.buyer) !== payment.payer) return "payer-mismatch";
+  if (getAddress(invoice.vendor) !== payment.vendor) return "vendor-mismatch";
+  if (invoice.amount !== payment.amount) return "amount-mismatch";
+  return null;
+}
+
 export async function processSettlement(
   payment: InvoicePayment,
   dependencies: SettlementDependencies,
   options: { dryRun?: boolean; signal?: AbortSignal } = {}
 ): Promise<SettlementOutcome> {
   const invoice = await dependencies.readInvoice(payment.invoiceId);
-
-  if (invoice.status === 0) {
-    return { kind: "skipped", reason: "invoice-not-found" };
-  }
-  if (invoice.status === 2) {
-    return { kind: "skipped", reason: "invoice-settled" };
-  }
-  if (invoice.status === 3) {
-    return { kind: "skipped", reason: "invoice-cancelled" };
-  }
-  if (invoice.status !== 1) {
-    return { kind: "skipped", reason: "invoice-not-open" };
-  }
-  if (getAddress(invoice.buyer) !== payment.payer) {
-    return { kind: "skipped", reason: "payer-mismatch" };
-  }
-  if (getAddress(invoice.vendor) !== payment.vendor) {
-    return { kind: "skipped", reason: "vendor-mismatch" };
-  }
-  if (invoice.amount !== payment.amount) {
-    return { kind: "skipped", reason: "amount-mismatch" };
-  }
+  const rejection = validatePaymentAgainstInvoice(payment, invoice);
+  if (rejection) return { kind: "skipped", reason: rejection };
 
   dependencies.onStage?.("invoice-validated", payment);
   if (options.dryRun) return { kind: "ready" };

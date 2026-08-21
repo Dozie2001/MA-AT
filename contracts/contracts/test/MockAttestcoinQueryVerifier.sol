@@ -19,4 +19,22 @@ contract MockAttestcoinQueryVerifier is IAttestcoinQueryVerifier {
     ) external pure returns (bool) {
         return merkleProof.root != bytes32(uint256(1));
     }
+
+    function verify(
+        uint64,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTransactions,
+        MerkleProof[] calldata merkleProofs,
+        ContinuityProof calldata
+    ) external pure returns (bool) {
+        if (
+            heights.length != encodedTransactions.length ||
+            heights.length != merkleProofs.length
+        ) return false;
+
+        for (uint256 i = 0; i < merkleProofs.length; i++) {
+            if (merkleProofs[i].root == bytes32(uint256(1))) return false;
+        }
+        return true;
+    }
 }

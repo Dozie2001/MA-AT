@@ -2,10 +2,10 @@ import type { Address, Hex } from 'viem'
 
 export const contracts = {
   settlementRouter: '0xCf3D8C3a3ADD06E8d4737f3AfF120e3257122fAe',
-  invoiceRegistry: '0x3923CF7230ca3144F323FC884b1eACaF5860EF50',
-  trustRegistry: '0xa6a3e5aa35571ff6f7e6F64Df3E457F56551821a',
-  settlementVerifier: '0x56e06DD47711D8433D7160E28E6ad771a0fc7e2d',
-  creditPolicy: '0x68169737E733f2b1461BB699b1f3Be05202A6dB5',
+  invoiceRegistry: '0xACD97e1980ba6E7E5eD142e1064E7929E43f1405',
+  trustRegistry: '0x075B6a3c8526413856Bb9a418C37fbE1aBA1BcA5',
+  settlementVerifier: '0x99d48BFA0a9713B9BDec032bd07785D010C8c666',
+  creditPolicy: '0xd02F1f044B20551763eF815778B561969E3EF70D',
   sepoliaUsdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
 } as const satisfies Record<string, Address>
 
