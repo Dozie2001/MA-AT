@@ -106,6 +106,13 @@ function validProof(root = ethers.ZeroHash) {
   };
 }
 
+function queryKey(height: bigint, txIndex = TX_INDEX) {
+  return ethers.solidityPackedKeccak256(
+    ["uint64", "uint64", "uint64"],
+    [CHAIN_KEY, height, txIndex]
+  );
+}
+
 describe("MaatSettlementVerifier", function () {
   it("atomically settles a proved invoice and updates trust and credit policy", async function () {
     const {
@@ -166,11 +173,186 @@ describe("MaatSettlementVerifier", function () {
     );
     expect(await creditPolicy.creditLimitUsdc(payer.address)).to.equal(1_000n * USDC);
 
-    const queryKey = ethers.solidityPackedKeccak256(
-      ["uint64", "uint64", "uint64"],
-      [CHAIN_KEY, HEIGHT, TX_INDEX]
+    expect(await verifier.processedQueries(queryKey(HEIGHT))).to.equal(true);
+  });
+
+  it("verifies and settles multiple invoices with one shared continuity proof", async function () {
+    const {
+      payer,
+      vendor,
+      router,
+      outsider: secondVendor,
+      invoiceRegistry,
+      trustRegistry,
+      verifier
+    } = await deploySettlementSystem();
+    const firstAmount = 400n * USDC;
+    const secondAmount = 600n * USDC;
+    const first = await createInvoice(
+      invoiceRegistry,
+      vendor,
+      payer.address,
+      firstAmount
     );
-    expect(await verifier.processedQueries(queryKey)).to.equal(true);
+    const second = await createInvoice(
+      invoiceRegistry,
+      secondVendor,
+      payer.address,
+      secondAmount
+    );
+    const heights = [HEIGHT, HEIGHT + 1n];
+    const encodedTransactions = [
+      encodeAttestedPayment(
+        first.invoiceId,
+        payer.address,
+        vendor.address,
+        router.address,
+        firstAmount,
+        first.dueAt - 60n
+      ),
+      encodeAttestedPayment(
+        second.invoiceId,
+        payer.address,
+        secondVendor.address,
+        router.address,
+        secondAmount,
+        second.dueAt + 60n
+      )
+    ];
+    const proofs = [validProof().merkleProof, validProof().merkleProof];
+    const sharedProof = validProof().continuityProof;
+    const queryKeys = heights.map((height) => queryKey(height));
+    const batchId = ethers.keccak256(
+      coder.encode(["bytes32[]"], [queryKeys])
+    );
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        heights,
+        encodedTransactions,
+        proofs,
+        sharedProof
+      )
+    )
+      .to.emit(verifier, "SettlementBatchAccepted")
+      .withArgs(CHAIN_KEY, batchId, 2n);
+
+    expect((await invoiceRegistry.getInvoice(first.invoiceId)).status).to.equal(2n);
+    expect((await invoiceRegistry.getInvoice(second.invoiceId)).status).to.equal(2n);
+    const payerMetrics = await trustRegistry.getPayerMetrics(payer.address);
+    expect(payerMetrics.settledInvoiceCount).to.equal(2n);
+    expect(payerMetrics.onTimeSettlementCount).to.equal(1n);
+    expect(payerMetrics.lateSettlementCount).to.equal(1n);
+    expect(payerMetrics.totalPaidUsdc).to.equal(firstAmount + secondAmount);
+    expect((await trustRegistry.getVendorMetrics(vendor.address)).totalReceivedUsdc).to.equal(
+      firstAmount
+    );
+    expect(
+      (await trustRegistry.getVendorMetrics(secondVendor.address)).totalReceivedUsdc
+    ).to.equal(secondAmount);
+    expect(await verifier.processedQueries(queryKeys[0])).to.equal(true);
+    expect(await verifier.processedQueries(queryKeys[1])).to.equal(true);
+  });
+
+  it("rolls back every invoice when one payment in a verified batch is invalid", async function () {
+    const {
+      payer,
+      vendor,
+      router,
+      outsider: secondVendor,
+      invoiceRegistry,
+      trustRegistry,
+      verifier
+    } = await deploySettlementSystem();
+    const amount = 500n * USDC;
+    const first = await createInvoice(invoiceRegistry, vendor, payer.address, amount);
+    const second = await createInvoice(
+      invoiceRegistry,
+      secondVendor,
+      payer.address,
+      amount
+    );
+    const heights = [HEIGHT, HEIGHT + 1n];
+    const encodedTransactions = [
+      encodeAttestedPayment(
+        first.invoiceId,
+        payer.address,
+        vendor.address,
+        router.address,
+        amount,
+        first.dueAt - 1n
+      ),
+      encodeAttestedPayment(
+        second.invoiceId,
+        payer.address,
+        secondVendor.address,
+        router.address,
+        amount + 1n,
+        second.dueAt - 1n
+      )
+    ];
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        heights,
+        encodedTransactions,
+        [validProof().merkleProof, validProof().merkleProof],
+        validProof().continuityProof
+      )
+    ).to.be.revertedWithCustomError(invoiceRegistry, "AmountDoesNotMatchInvoice");
+
+    expect((await invoiceRegistry.getInvoice(first.invoiceId)).status).to.equal(1n);
+    expect((await invoiceRegistry.getInvoice(second.invoiceId)).status).to.equal(1n);
+    expect((await trustRegistry.getPayerMetrics(payer.address)).settledInvoiceCount).to.equal(0n);
+    expect(await verifier.processedQueries(queryKey(heights[0]))).to.equal(false);
+    expect(await verifier.processedQueries(queryKey(heights[1]))).to.equal(false);
+  });
+
+  it("enforces batch size, matching arrays, and unique source queries", async function () {
+    const { verifier } = await deploySettlementSystem();
+    const proof = validProof();
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        [HEIGHT],
+        ["0x"],
+        [proof.merkleProof],
+        proof.continuityProof
+      )
+    ).to.be.revertedWithCustomError(verifier, "InvalidBatchSize");
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        [HEIGHT, HEIGHT + 1n],
+        ["0x"],
+        [proof.merkleProof, proof.merkleProof],
+        proof.continuityProof
+      )
+    ).to.be.revertedWithCustomError(verifier, "BatchLengthMismatch");
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        Array.from({ length: 11 }, (_, index) => HEIGHT + BigInt(index)),
+        Array.from({ length: 11 }, () => "0x"),
+        Array.from({ length: 11 }, () => proof.merkleProof),
+        proof.continuityProof
+      )
+    ).to.be.revertedWithCustomError(verifier, "InvalidBatchSize");
+
+    await expect(
+      verifier.submitVerifiedSettlementBatch(
+        CHAIN_KEY,
+        [HEIGHT, HEIGHT],
+        ["0x", "0x"],
+        [proof.merkleProof, proof.merkleProof],
+        proof.continuityProof
+      )
+    ).to.be.revertedWithCustomError(verifier, "DuplicateBatchQuery");
   });
 
   it("rejects an unexpected source chain before verification", async function () {
@@ -234,11 +416,7 @@ describe("MaatSettlementVerifier", function () {
       )
     ).to.be.revertedWithCustomError(invoiceRegistry, "AmountDoesNotMatchInvoice");
 
-    const queryKey = ethers.solidityPackedKeccak256(
-      ["uint64", "uint64", "uint64"],
-      [CHAIN_KEY, HEIGHT, TX_INDEX]
-    );
-    expect(await verifier.processedQueries(queryKey)).to.equal(false);
+    expect(await verifier.processedQueries(queryKey(HEIGHT))).to.equal(false);
     expect((await invoiceRegistry.getInvoice(invoiceId)).status).to.equal(1n);
     expect((await trustRegistry.getPayerMetrics(payer.address)).settledInvoiceCount).to.equal(0n);
   });

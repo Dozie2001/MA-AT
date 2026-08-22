@@ -97,12 +97,16 @@ async function main(): Promise<void> {
   if ((await verifier.sourceRouter()) !== sourceRouter) {
     throw new Error("MaatSettlementVerifier source router binding mismatch");
   }
+  if ((await verifier.MAX_BATCH_SIZE()) !== 10n) {
+    throw new Error("MaatSettlementVerifier batch capability mismatch");
+  }
 
   console.log(`InvoiceRegistry=${await registry.getAddress()}`);
   console.log(`MaatTrustRegistry=${await trust.getAddress()}`);
   console.log(`MaatSettlementVerifier=${verifierAddress}`);
   console.log(`MaatCreditPolicy=${await policy.getAddress()}`);
   console.log(`SourceRouter=${sourceRouter}`);
+  console.log("MaxBatchSize=10");
 }
 
 void main().catch((error) => {

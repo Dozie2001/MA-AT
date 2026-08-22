@@ -57,6 +57,81 @@
         "type": "uint64"
       },
       {
+        "internalType": "uint64[]",
+        "name": "heights",
+        "type": "uint64[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "encodedTransactions",
+        "type": "bytes[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "hash",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bool",
+                "name": "isLeft",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct IAttestcoinQueryVerifier.MerkleProofEntry[]",
+            "name": "siblings",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct IAttestcoinQueryVerifier.MerkleProof[]",
+        "name": "merkleProofs",
+        "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "lowerEndpointDigest",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "roots",
+            "type": "bytes32[]"
+          }
+        ],
+        "internalType": "struct IAttestcoinQueryVerifier.ContinuityProof",
+        "name": "sharedContinuityProof",
+        "type": "tuple"
+      }
+    ],
+    "name": "verify",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "chainKey",
+        "type": "uint64"
+      },
+      {
         "internalType": "uint64",
         "name": "height",
         "type": "uint64"

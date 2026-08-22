@@ -59,6 +59,81 @@ import type { NonPayableOverrides } from "../../common.js"
         "type": "uint64"
       },
       {
+        "internalType": "uint64[]",
+        "name": "heights",
+        "type": "uint64[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "encodedTransactions",
+        "type": "bytes[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "hash",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bool",
+                "name": "isLeft",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct IAttestcoinQueryVerifier.MerkleProofEntry[]",
+            "name": "siblings",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct IAttestcoinQueryVerifier.MerkleProof[]",
+        "name": "merkleProofs",
+        "type": "tuple[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "lowerEndpointDigest",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "roots",
+            "type": "bytes32[]"
+          }
+        ],
+        "internalType": "struct IAttestcoinQueryVerifier.ContinuityProof",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "name": "verify",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      },
+      {
         "internalType": "uint64",
         "name": "",
         "type": "uint64"
@@ -128,7 +203,7 @@ import type { NonPayableOverrides } from "../../common.js"
   }
 ] as const;
 
-  const _bytecode = "0x60808060405234601557610188908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c90816344f85f1c146100e95750637cc4e25814610032575f80fd5b346100e55760a03660031901126100e55761004b610124565b5061005461013b565b5060443567ffffffffffffffff81116100e557366023820112156100e557806004013567ffffffffffffffff81116100e557369101602401116100e55760643567ffffffffffffffff81116100e557604060031982360301126100e55760843567ffffffffffffffff81116100e55760409060031990360301126100e5576020906001604051916004013514158152f35b5f80fd5b346100e55760203660031901126100e55760043567ffffffffffffffff81116100e55760409060031990360301126100e55780605860209252f35b6004359067ffffffffffffffff821682036100e557565b6024359067ffffffffffffffff821682036100e55756fea26469706673582212207d83a120f8edab85743691fc250b4d40c8a4ed62813eed1f232129b91d0d73df64736f6c634300081c0033";
+  const _bytecode = "0x608080604052346015576102e0908161001a8239f35b5f80fdfe60806040526004361015610011575f80fd5b5f3560e01c80631b5f6f881461012e57806344f85f1c146100f157637cc4e2581461003a575f80fd5b346100ed5760a03660031901126100ed576100536101e4565b5061005c6101fb565b5060443567ffffffffffffffff81116100ed57366023820112156100ed57806004013567ffffffffffffffff81116100ed57369101602401116100ed5760643567ffffffffffffffff81116100ed57604060031982360301126100ed5760843567ffffffffffffffff81116100ed5760409060031990360301126100ed576020906001604051916004013514158152f35b5f80fd5b346100ed5760203660031901126100ed5760043567ffffffffffffffff81116100ed5760409060031990360301126100ed57602060405160588152f35b346100ed5760a03660031901126100ed576101476101e4565b5060243567ffffffffffffffff81116100ed57610168903690600401610212565b9060443567ffffffffffffffff81116100ed57610189903690600401610212565b9060643567ffffffffffffffff81116100ed576101aa903690600401610212565b92909160843567ffffffffffffffff81116100ed5760409060031990360301126100ed576020956101da95610243565b6040519015158152f35b6004359067ffffffffffffffff821682036100ed57565b6024359067ffffffffffffffff821682036100ed57565b9181601f840112156100ed5782359167ffffffffffffffff83116100ed576020808501948460051b0101116100ed57565b509184915082149182159261029f575b5050610299575f5b82811015610291578060051b820135603e19833603018112156100ed5782013560011461028a5760010161025b565b5050505f90565b505050600190565b50505f90565b14159050825f61025356fea264697066735822122097e926b853563601b038d9e28c033ba60675b780d8da0f7e0826a08ea33815b764736f6c634300081c0033";
 
   
       type MockAttestcoinQueryVerifierConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;

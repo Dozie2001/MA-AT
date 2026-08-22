@@ -23,15 +23,17 @@ export declare namespace IAttestcoinQueryVerifier {
     }
 
   export interface IAttestcoinQueryVerifierInterface extends Interface {
-    getFunction(nameOrSignature: "calculateTxIndex" | "verify"): FunctionFragment;
+    getFunction(nameOrSignature: "calculateTxIndex" | "verify(uint64,uint64[],bytes[],(bytes32,(bytes32,bool)[])[],(bytes32,bytes32[]))" | "verify(uint64,uint64,bytes,(bytes32,(bytes32,bool)[]),(bytes32,bytes32[]))"): FunctionFragment;
 
     
 
     encodeFunctionData(functionFragment: 'calculateTxIndex', values: [IAttestcoinQueryVerifier.MerkleProofStruct]): string;
-encodeFunctionData(functionFragment: 'verify', values: [BigNumberish, BigNumberish, BytesLike, IAttestcoinQueryVerifier.MerkleProofStruct, IAttestcoinQueryVerifier.ContinuityProofStruct]): string;
+encodeFunctionData(functionFragment: 'verify(uint64,uint64[],bytes[],(bytes32,(bytes32,bool)[])[],(bytes32,bytes32[]))', values: [BigNumberish, BigNumberish[], BytesLike[], IAttestcoinQueryVerifier.MerkleProofStruct[], IAttestcoinQueryVerifier.ContinuityProofStruct]): string;
+encodeFunctionData(functionFragment: 'verify(uint64,uint64,bytes,(bytes32,(bytes32,bool)[]),(bytes32,bytes32[]))', values: [BigNumberish, BigNumberish, BytesLike, IAttestcoinQueryVerifier.MerkleProofStruct, IAttestcoinQueryVerifier.ContinuityProofStruct]): string;
 
     decodeFunctionResult(functionFragment: 'calculateTxIndex', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'verify', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'verify(uint64,uint64[],bytes[],(bytes32,(bytes32,bool)[])[],(bytes32,bytes32[]))', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'verify(uint64,uint64,bytes,(bytes32,(bytes32,bool)[]),(bytes32,bytes32[]))', data: BytesLike): Result;
   }
 
   
@@ -78,7 +80,15 @@ decodeFunctionResult(functionFragment: 'verify', data: BytesLike): Result;
     
 
     
-    verify: TypedContractMethod<
+    "verify(uint64,uint64[],bytes[],(bytes32,(bytes32,bool)[])[],(bytes32,bytes32[]))": TypedContractMethod<
+      [chainKey: BigNumberish, heights: BigNumberish[], encodedTransactions: BytesLike[], merkleProofs: IAttestcoinQueryVerifier.MerkleProofStruct[], sharedContinuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    "verify(uint64,uint64,bytes,(bytes32,(bytes32,bool)[]),(bytes32,bytes32[]))": TypedContractMethod<
       [chainKey: BigNumberish, height: BigNumberish, encodedTransaction: BytesLike, merkleProof: IAttestcoinQueryVerifier.MerkleProofStruct, continuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
       [boolean],
       'view'
@@ -93,7 +103,12 @@ decodeFunctionResult(functionFragment: 'verify', data: BytesLike): Result;
       [bigint],
       'view'
     >;
-getFunction(nameOrSignature: 'verify'): TypedContractMethod<
+getFunction(nameOrSignature: 'verify(uint64,uint64[],bytes[],(bytes32,(bytes32,bool)[])[],(bytes32,bytes32[]))'): TypedContractMethod<
+      [chainKey: BigNumberish, heights: BigNumberish[], encodedTransactions: BytesLike[], merkleProofs: IAttestcoinQueryVerifier.MerkleProofStruct[], sharedContinuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'verify(uint64,uint64,bytes,(bytes32,(bytes32,bool)[]),(bytes32,bytes32[]))'): TypedContractMethod<
       [chainKey: BigNumberish, height: BigNumberish, encodedTransaction: BytesLike, merkleProof: IAttestcoinQueryVerifier.MerkleProofStruct, continuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
       [boolean],
       'view'

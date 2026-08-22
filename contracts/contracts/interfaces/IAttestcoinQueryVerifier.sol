@@ -26,4 +26,12 @@ interface IAttestcoinQueryVerifier {
         MerkleProof calldata merkleProof,
         ContinuityProof calldata continuityProof
     ) external view returns (bool);
+
+    function verify(
+        uint64 chainKey,
+        uint64[] calldata heights,
+        bytes[] calldata encodedTransactions,
+        MerkleProof[] calldata merkleProofs,
+        ContinuityProof calldata sharedContinuityProof
+    ) external view returns (bool);
 }

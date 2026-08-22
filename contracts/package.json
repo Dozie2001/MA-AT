@@ -15,6 +15,7 @@
     "deploy:creditcoin": "hardhat run scripts/deploy-creditcoin.ts --network creditcoinTestnet",
     "deploy:settlement:sepolia": "hardhat run scripts/deploy-settlement-sepolia.ts --network sepolia",
     "deploy:settlement:creditcoin": "hardhat run scripts/deploy-settlement-creditcoin.ts --network creditcoinTestnet",
+    "resume:settlement:creditcoin": "node scripts/resume-settlement-creditcoin.ts",
     "invoice:create": "node scripts/create-invoice-creditcoin.ts",
     "invoice:pay": "node scripts/pay-invoice-sepolia.ts",
     "report:sepolia": "hardhat run scripts/report-execution-sepolia.ts --network sepolia"

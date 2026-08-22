@@ -16,6 +16,7 @@
     "verify-state": "node --import tsx src/verifyState.ts",
     "watch-settlements": "node --import tsx src/watchSettlements.ts",
     "process-settlement": "node --import tsx src/processSettlementTx.ts",
+    "process-settlement-batch": "node --import tsx src/processSettlementBatchTx.ts",
     "verify-settlement": "node --import tsx src/verifySettlementState.ts"
   },
   "dependencies": {

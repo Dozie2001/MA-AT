@@ -23,28 +23,44 @@ export declare namespace IAttestcoinQueryVerifier {
     }
 
   export interface MaatSettlementVerifierInterface extends Interface {
-    getFunction(nameOrSignature: "VERIFIER" | "invoiceRegistry" | "processedQueries" | "sourceChainKey" | "sourceRouter" | "submitVerifiedSettlement" | "trustRegistry"): FunctionFragment;
+    getFunction(nameOrSignature: "MAX_BATCH_SIZE" | "VERIFIER" | "invoiceRegistry" | "processedQueries" | "sourceChainKey" | "sourceRouter" | "submitVerifiedSettlement" | "submitVerifiedSettlementBatch" | "trustRegistry"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "SettlementProofAccepted"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "SettlementBatchAccepted" | "SettlementProofAccepted"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'VERIFIER', values?: undefined): string;
+    encodeFunctionData(functionFragment: 'MAX_BATCH_SIZE', values?: undefined): string;
+encodeFunctionData(functionFragment: 'VERIFIER', values?: undefined): string;
 encodeFunctionData(functionFragment: 'invoiceRegistry', values?: undefined): string;
 encodeFunctionData(functionFragment: 'processedQueries', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'sourceChainKey', values?: undefined): string;
 encodeFunctionData(functionFragment: 'sourceRouter', values?: undefined): string;
 encodeFunctionData(functionFragment: 'submitVerifiedSettlement', values: [BigNumberish, BigNumberish, BytesLike, IAttestcoinQueryVerifier.MerkleProofStruct, IAttestcoinQueryVerifier.ContinuityProofStruct]): string;
+encodeFunctionData(functionFragment: 'submitVerifiedSettlementBatch', values: [BigNumberish, BigNumberish[], BytesLike[], IAttestcoinQueryVerifier.MerkleProofStruct[], IAttestcoinQueryVerifier.ContinuityProofStruct]): string;
 encodeFunctionData(functionFragment: 'trustRegistry', values?: undefined): string;
 
-    decodeFunctionResult(functionFragment: 'VERIFIER', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'MAX_BATCH_SIZE', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'VERIFIER', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'invoiceRegistry', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'processedQueries', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'sourceChainKey', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'sourceRouter', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'submitVerifiedSettlement', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'submitVerifiedSettlementBatch', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'trustRegistry', data: BytesLike): Result;
   }
 
   
+    export namespace SettlementBatchAcceptedEvent {
+      export type InputTuple = [chainKey: BigNumberish, batchId: BytesLike, settlementCount: BigNumberish];
+      export type OutputTuple = [chainKey: bigint, batchId: string, settlementCount: bigint];
+      export interface OutputObject {chainKey: bigint, batchId: string, settlementCount: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
     export namespace SettlementProofAcceptedEvent {
       export type InputTuple = [chainKey: BigNumberish, height: BigNumberish, txIndex: BigNumberish, invoiceId: BytesLike, payer: AddressLike, vendor: AddressLike, amount: BigNumberish, paidAt: BigNumberish, onTime: boolean];
       export type OutputTuple = [chainKey: bigint, height: bigint, txIndex: bigint, invoiceId: string, payer: string, vendor: string, amount: bigint, paidAt: bigint, onTime: boolean];
@@ -90,6 +106,14 @@ decodeFunctionResult(functionFragment: 'trustRegistry', data: BytesLike): Result
 
 
     
+    
+    MAX_BATCH_SIZE: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
     
     VERIFIER: TypedContractMethod<
       [],
@@ -139,6 +163,14 @@ decodeFunctionResult(functionFragment: 'trustRegistry', data: BytesLike): Result
     
 
     
+    submitVerifiedSettlementBatch: TypedContractMethod<
+      [chainKey: BigNumberish, heights: BigNumberish[], encodedTransactions: BytesLike[], merkleProofs: IAttestcoinQueryVerifier.MerkleProofStruct[], sharedContinuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
+      [boolean],
+      'nonpayable'
+    >
+    
+
+    
     trustRegistry: TypedContractMethod<
       [],
       [string],
@@ -149,7 +181,12 @@ decodeFunctionResult(functionFragment: 'trustRegistry', data: BytesLike): Result
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
-    getFunction(nameOrSignature: 'VERIFIER'): TypedContractMethod<
+    getFunction(nameOrSignature: 'MAX_BATCH_SIZE'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'VERIFIER'): TypedContractMethod<
       [],
       [string],
       'view'
@@ -179,16 +216,26 @@ getFunction(nameOrSignature: 'submitVerifiedSettlement'): TypedContractMethod<
       [boolean],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'submitVerifiedSettlementBatch'): TypedContractMethod<
+      [chainKey: BigNumberish, heights: BigNumberish[], encodedTransactions: BytesLike[], merkleProofs: IAttestcoinQueryVerifier.MerkleProofStruct[], sharedContinuityProof: IAttestcoinQueryVerifier.ContinuityProofStruct, ],
+      [boolean],
+      'nonpayable'
+    >;
 getFunction(nameOrSignature: 'trustRegistry'): TypedContractMethod<
       [],
       [string],
       'view'
     >;
 
-    getEvent(key: 'SettlementProofAccepted'): TypedContractEvent<SettlementProofAcceptedEvent.InputTuple, SettlementProofAcceptedEvent.OutputTuple, SettlementProofAcceptedEvent.OutputObject>;
+    getEvent(key: 'SettlementBatchAccepted'): TypedContractEvent<SettlementBatchAcceptedEvent.InputTuple, SettlementBatchAcceptedEvent.OutputTuple, SettlementBatchAcceptedEvent.OutputObject>;
+getEvent(key: 'SettlementProofAccepted'): TypedContractEvent<SettlementProofAcceptedEvent.InputTuple, SettlementProofAcceptedEvent.OutputTuple, SettlementProofAcceptedEvent.OutputObject>;
 
     filters: {
       
+      'SettlementBatchAccepted(uint64,bytes32,uint256)': TypedContractEvent<SettlementBatchAcceptedEvent.InputTuple, SettlementBatchAcceptedEvent.OutputTuple, SettlementBatchAcceptedEvent.OutputObject>;
+      SettlementBatchAccepted: TypedContractEvent<SettlementBatchAcceptedEvent.InputTuple, SettlementBatchAcceptedEvent.OutputTuple, SettlementBatchAcceptedEvent.OutputObject>;
+    
+
       'SettlementProofAccepted(uint64,uint64,uint64,bytes32,address,address,uint256,uint256,bool)': TypedContractEvent<SettlementProofAcceptedEvent.InputTuple, SettlementProofAcceptedEvent.OutputTuple, SettlementProofAcceptedEvent.OutputObject>;
       SettlementProofAccepted: TypedContractEvent<SettlementProofAcceptedEvent.InputTuple, SettlementProofAcceptedEvent.OutputTuple, SettlementProofAcceptedEvent.OutputObject>;
     
