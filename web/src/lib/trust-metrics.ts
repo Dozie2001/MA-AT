@@ -7,6 +7,12 @@ export interface PayerMetrics {
   tier: number
 }
 
+export interface VendorMetrics {
+  settledInvoiceCount: bigint
+  lastSettledAt: bigint
+  totalReceivedUsdc: bigint
+}
+
 const usdcUnit = 1_000_000n
 
 export function calculateTrustTier(
@@ -62,4 +68,26 @@ export function aggregatePayerMetrics(
   )
 
   return { ...metrics, tier: calculateTrustTier(metrics) }
+}
+
+export function aggregateVendorMetrics(
+  entries: ReadonlyArray<VendorMetrics>,
+): VendorMetrics {
+  return entries.reduce<VendorMetrics>(
+    (total, entry) => ({
+      settledInvoiceCount:
+        total.settledInvoiceCount + entry.settledInvoiceCount,
+      lastSettledAt:
+        total.lastSettledAt > entry.lastSettledAt
+          ? total.lastSettledAt
+          : entry.lastSettledAt,
+      totalReceivedUsdc:
+        total.totalReceivedUsdc + entry.totalReceivedUsdc,
+    }),
+    {
+      settledInvoiceCount: 0n,
+      lastSettledAt: 0n,
+      totalReceivedUsdc: 0n,
+    },
+  )
 }
