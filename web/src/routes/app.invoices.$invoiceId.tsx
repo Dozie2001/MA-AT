@@ -30,6 +30,7 @@ import {
   erc20Abi,
   invoiceRegistryAbi,
   invoiceStatuses,
+  settlementDeployments,
   settlementRouterAbi,
   trustRegistryAbi,
   trustTiers,
@@ -45,6 +46,7 @@ import {
 } from '../lib/format'
 import { creditCoin3Testnet, sepolia } from '../lib/web3'
 import { getInvoicePaymentHistory } from '../lib/payment-history'
+import { aggregatePayerMetrics } from '../lib/trust-metrics'
 
 export const Route = createFileRoute('/app/invoices/$invoiceId')({
   component: InvoiceDetail,
@@ -63,16 +65,32 @@ function InvoiceDetail() {
   const pay = useWriteContract()
   const cancel = useWriteContract()
 
-  const invoiceQuery = useReadContract({
-    address: contracts.invoiceRegistry,
-    abi: invoiceRegistryAbi,
-    functionName: 'getInvoice',
-    args: invoiceId ? [invoiceId] : undefined,
-    chainId: creditCoin3Testnet.id,
+  const invoiceQuery = useReadContracts({
+    allowFailure: false,
+    contracts: invoiceId
+      ? settlementDeployments.map((deployment) => ({
+          address: deployment.invoiceRegistry,
+          abi: invoiceRegistryAbi,
+          functionName: 'getInvoice' as const,
+          args: [invoiceId] as const,
+          chainId: creditCoin3Testnet.id,
+        }))
+      : [],
     query: { enabled: Boolean(invoiceId), refetchInterval: 15_000 },
   })
-  const invoice = invoiceQuery.data
+  const invoiceDeploymentIndex = invoiceQuery.data?.findIndex(
+    (candidate) => candidate.status !== 0,
+  )
+  const invoiceDeployment =
+    invoiceDeploymentIndex !== undefined && invoiceDeploymentIndex >= 0
+      ? settlementDeployments[invoiceDeploymentIndex]
+      : undefined
+  const invoice =
+    invoiceDeploymentIndex !== undefined && invoiceDeploymentIndex >= 0
+      ? invoiceQuery.data?.[invoiceDeploymentIndex]
+      : undefined
   const isExistingInvoice = Boolean(invoice && invoice.status !== 0)
+  const isWritableInvoice = invoiceDeployment?.writable === true
   const isOpen = invoice?.status === 1
   const isBuyer = Boolean(
     invoice && connection.address && invoice.buyer === connection.address,
@@ -115,7 +133,11 @@ function InvoiceDetail() {
         ? [connection.address, contracts.settlementRouter]
         : undefined,
     chainId: sepolia.id,
-    query: { enabled: Boolean(connection.address && isBuyer && isOpen) },
+    query: {
+      enabled: Boolean(
+        connection.address && isBuyer && isOpen && isWritableInvoice,
+      ),
+    },
   })
   const balance = useReadContract({
     address: contracts.sepoliaUsdc,
@@ -123,7 +145,11 @@ function InvoiceDetail() {
     functionName: 'balanceOf',
     args: connection.address && isBuyer ? [connection.address] : undefined,
     chainId: sepolia.id,
-    query: { enabled: Boolean(connection.address && isBuyer && isOpen) },
+    query: {
+      enabled: Boolean(
+        connection.address && isBuyer && isOpen && isWritableInvoice,
+      ),
+    },
   })
 
   const payerTrust = useReadContracts({
@@ -131,7 +157,14 @@ function InvoiceDetail() {
     contracts: invoice
       ? [
           {
-            address: contracts.trustRegistry,
+            address: settlementDeployments[0].trustRegistry,
+            abi: trustRegistryAbi,
+            functionName: 'getPayerMetrics',
+            args: [invoice.buyer],
+            chainId: creditCoin3Testnet.id,
+          },
+          {
+            address: settlementDeployments[1].trustRegistry,
             abi: trustRegistryAbi,
             functionName: 'getPayerMetrics',
             args: [invoice.buyer],
@@ -190,6 +223,7 @@ function InvoiceDetail() {
   }
 
   async function resetUsdcAllowance() {
+    if (!isWritableInvoice) return
     try {
       await ensureSepolia()
       resetApproval.writeContract({
@@ -205,7 +239,7 @@ function InvoiceDetail() {
   }
 
   async function approveUsdc() {
-    if (!invoice) return
+    if (!invoice || !isWritableInvoice) return
     try {
       await ensureSepolia()
       approve.writeContract({
@@ -221,7 +255,7 @@ function InvoiceDetail() {
   }
 
   async function payInvoice() {
-    if (!invoice || !invoiceId || matchingPayment) return
+    if (!invoice || !invoiceId || matchingPayment || !isWritableInvoice) return
     try {
       await ensureSepolia()
       pay.writeContract({
@@ -237,13 +271,13 @@ function InvoiceDetail() {
   }
 
   async function cancelInvoice() {
-    if (!invoiceId) return
+    if (!invoiceId || !invoiceDeployment || !isWritableInvoice) return
     try {
       if (connection.chainId !== creditCoin3Testnet.id) {
         await switchChain.switchChainAsync({ chainId: creditCoin3Testnet.id })
       }
       cancel.writeContract({
-        address: contracts.invoiceRegistry,
+        address: invoiceDeployment.invoiceRegistry,
         abi: invoiceRegistryAbi,
         functionName: 'cancelInvoice',
         args: [invoiceId],
@@ -255,7 +289,13 @@ function InvoiceDetail() {
   }
 
   function downloadProofReceipt() {
-    if (!invoice || !matchingPayment || !proofReceipt.data?.available) return
+    if (
+      !invoice ||
+      !invoiceDeployment ||
+      !matchingPayment ||
+      !proofReceipt.data?.available
+    )
+      return
 
     const receipt = {
       schema: 'maat.attestcoin-proof-receipt.v1',
@@ -272,8 +312,9 @@ function InvoiceDetail() {
       attestcoinProof: proofReceipt.data,
       creditcoin: {
         chainId: creditCoin3Testnet.id,
-        invoiceRegistry: contracts.invoiceRegistry,
-        settlementVerifier: contracts.settlementVerifier,
+        invoiceRegistry: invoiceDeployment.invoiceRegistry,
+        settlementVerifier: invoiceDeployment.settlementVerifier,
+        deployment: invoiceDeployment.key,
         settled: invoice.status === 2,
       },
     }
@@ -313,15 +354,17 @@ function InvoiceDetail() {
     )
   }
 
-  if (!invoice || invoice.status === 0) {
+  if (!invoice || !invoiceDeployment || invoice.status === 0) {
     return (
-      <InvalidInvoice message="No invoice exists for this ID in the deployed Creditcoin InvoiceRegistry." />
+      <InvalidInvoice message="No invoice exists for this ID in the current or legacy Creditcoin InvoiceRegistry." />
     )
   }
 
   const status = invoiceStatuses[invoice.status]
-  const metrics = payerTrust.data?.[0]
-  const creditLimit = payerTrust.data?.[1] ?? 0n
+  const metrics = payerTrust.data
+    ? aggregatePayerMetrics([payerTrust.data[0], payerTrust.data[1]])
+    : undefined
+  const creditLimit = payerTrust.data?.[2] ?? 0n
   const hasBalance =
     balance.data !== undefined && balance.data >= invoice.amount
   const currentAllowance = allowance.data ?? 0n
@@ -376,7 +419,7 @@ function InvoiceDetail() {
                 className="icon-button"
                 href={explorerAddress(
                   creditCoin3Testnet.blockExplorers.default.url,
-                  contracts.invoiceRegistry,
+                  invoiceDeployment.invoiceRegistry,
                 )}
                 target="_blank"
                 rel="noreferrer"
@@ -437,6 +480,13 @@ function InvoiceDetail() {
                 <dd className="mono">{invoice.metadataHash}</dd>
               </div>
             </dl>
+            {!isWritableInvoice ? (
+              <div className="inline-notice">
+                This record belongs to {invoiceDeployment.label}. It remains
+                verifiable on-chain, but new payment and cancellation actions
+                use the active Batch v2 deployment only.
+              </div>
+            ) : null}
           </section>
 
           <section className="panel panel-spaced">
@@ -646,25 +696,31 @@ function InvoiceDetail() {
             {payerTrust.isPending ? (
               <div className="loading-line" />
             ) : metrics ? (
-              <div className="metric-grid">
-                <div className="metric-card">
-                  <span>Settlements</span>
-                  <strong>{metrics.settledInvoiceCount.toString()}</strong>
-                  <small>
-                    {metrics.onTimeSettlementCount.toString()} on time
-                  </small>
+              <>
+                <div className="metric-grid">
+                  <div className="metric-card">
+                    <span>Settlements</span>
+                    <strong>{metrics.settledInvoiceCount.toString()}</strong>
+                    <small>
+                      {metrics.onTimeSettlementCount.toString()} on time ·
+                      lifetime
+                    </small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Paid volume</span>
+                    <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
+                    <small>Verified USDC · all deployments</small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Credit limit</span>
+                    <strong>${formatUsdc(creditLimit)}</strong>
+                    <small>Active v2 policy output</small>
+                  </div>
                 </div>
-                <div className="metric-card">
-                  <span>Paid volume</span>
-                  <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
-                  <small>Verified USDC</small>
+                <div className="inline-notice">
+                  Lifetime trust combines verified v1 and v2 settlements.
                 </div>
-                <div className="metric-card">
-                  <span>Credit limit</span>
-                  <strong>${formatUsdc(creditLimit)}</strong>
-                  <small>Policy output</small>
-                </div>
-              </div>
+              </>
             ) : (
               <div className="inline-notice">
                 Trust state is currently unavailable.
@@ -681,6 +737,8 @@ function InvoiceDetail() {
                 <h2>
                   {invoice.status === 2
                     ? 'Settlement complete'
+                    : !isWritableInvoice
+                      ? 'Historical record'
                     : isBuyer
                       ? 'Pay invoice'
                       : isVendor
@@ -711,7 +769,7 @@ function InvoiceDetail() {
               </div>
             ) : null}
 
-            {isOpen && isBuyer ? (
+            {isOpen && isBuyer && isWritableInvoice ? (
               <div className="action-stack">
                 <div className="network-callout">
                   <img className="token-icon" src={usdcIconUrl} alt="USDC" />
@@ -800,7 +858,7 @@ function InvoiceDetail() {
               </div>
             ) : null}
 
-            {isOpen && isVendor && !alreadyPaid ? (
+            {isOpen && isVendor && !alreadyPaid && isWritableInvoice ? (
               <div className="action-stack">
                 <div className="inline-notice">
                   Only the vendor can cancel an open invoice. Cancellation
@@ -819,7 +877,11 @@ function InvoiceDetail() {
               </div>
             ) : null}
 
-            {isOpen && connection.address && !isBuyer && !isVendor ? (
+            {isOpen &&
+            connection.address &&
+            !isBuyer &&
+            !isVendor &&
+            isWritableInvoice ? (
               <div className="inline-notice">
                 The connected wallet is neither the recorded buyer nor vendor,
                 so this invoice is read-only.
