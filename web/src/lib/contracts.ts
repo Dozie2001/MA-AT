@@ -185,6 +185,23 @@ export const trustRegistryAbi = [
       },
     ],
   },
+  {
+    type: 'function',
+    name: 'getVendorMetrics',
+    stateMutability: 'view',
+    inputs: [{ name: 'vendor', type: 'address' }],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple',
+        components: [
+          { name: 'settledInvoiceCount', type: 'uint64' },
+          { name: 'lastSettledAt', type: 'uint64' },
+          { name: 'totalReceivedUsdc', type: 'uint256' },
+        ],
+      },
+    ],
+  },
 ] as const
 
 export const creditPolicyAbi = [

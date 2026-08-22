@@ -28,7 +28,10 @@ import {
   trustTiers,
 } from '../lib/contracts'
 import { formatTimestamp, formatUsdc, truncateAddress } from '../lib/format'
-import { aggregatePayerMetrics } from '../lib/trust-metrics'
+import {
+  aggregatePayerMetrics,
+  aggregateVendorMetrics,
+} from '../lib/trust-metrics'
 import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/')({ component: Dashboard })
@@ -192,6 +195,20 @@ function Dashboard() {
             chainId: creditCoin3Testnet.id,
           },
           {
+            address: currentDeployment.trustRegistry,
+            abi: trustRegistryAbi,
+            functionName: 'getVendorMetrics',
+            args: [address],
+            chainId: creditCoin3Testnet.id,
+          },
+          {
+            address: legacyDeployment.trustRegistry,
+            abi: trustRegistryAbi,
+            functionName: 'getVendorMetrics',
+            args: [address],
+            chainId: creditCoin3Testnet.id,
+          },
+          {
             address: contracts.creditPolicy,
             abi: creditPolicyAbi,
             functionName: 'creditLimitUsdc',
@@ -206,7 +223,10 @@ function Dashboard() {
   const metrics = trust.data
     ? aggregatePayerMetrics([trust.data[0], trust.data[1]])
     : undefined
-  const creditLimit = trust.data?.[2] ?? 0n
+  const vendorMetrics = trust.data
+    ? aggregateVendorMetrics([trust.data[2], trust.data[3]])
+    : undefined
+  const creditLimit = trust.data?.[4] ?? 0n
 
   function refetchInvoiceHistory() {
     for (const query of invoiceEventQueries) void query.refetch()
@@ -251,8 +271,8 @@ function Dashboard() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">CONNECTED PAYER</span>
-                <h2>Trust position</h2>
+                <span className="eyebrow">CONNECTED WALLET</span>
+                <h2>Settlement position</h2>
                 <p>
                   Read directly from MaatTrustRegistry and MaatCreditPolicy.
                 </p>
@@ -285,21 +305,24 @@ function Dashboard() {
                 Could not read Creditcoin trust state:{' '}
                 {trust.error.message.split('\n')[0]}
               </div>
-            ) : metrics ? (
+            ) : metrics && vendorMetrics ? (
               <>
                 <div className="metric-grid">
                   <div className="metric-card">
-                    <span>Verified invoices</span>
-                    <strong>{metrics.settledInvoiceCount.toString()}</strong>
+                    <span>Verified paid volume</span>
+                    <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
                     <small>
-                      {metrics.onTimeSettlementCount.toString()} paid on time ·
-                      lifetime
+                      {metrics.settledInvoiceCount.toString()} invoices ·{' '}
+                      {metrics.onTimeSettlementCount.toString()} on time
                     </small>
                   </div>
                   <div className="metric-card">
-                    <span>Verified volume</span>
-                    <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
-                    <small>Sepolia USDC · all deployments</small>
+                    <span>Verified received volume</span>
+                    <strong>${formatUsdc(vendorMetrics.totalReceivedUsdc)}</strong>
+                    <small>
+                      {vendorMetrics.settledInvoiceCount.toString()} invoices ·
+                      Sepolia USDC
+                    </small>
                   </div>
                   <div className="metric-card">
                     <span>Credit policy limit</span>
