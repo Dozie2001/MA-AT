@@ -9,6 +9,35 @@ export const contracts = {
   sepoliaUsdc: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
 } as const satisfies Record<string, Address>
 
+export const settlementDeployments = [
+  {
+    key: 'current',
+    label: 'Batch v2',
+    invoiceRegistry: contracts.invoiceRegistry,
+    trustRegistry: contracts.trustRegistry,
+    settlementVerifier: contracts.settlementVerifier,
+    deploymentBlock: 5_350_413n,
+    writable: true,
+  },
+  {
+    key: 'legacy',
+    label: 'Legacy v1',
+    invoiceRegistry: '0x3923CF7230ca3144F323FC884b1eACaF5860EF50',
+    trustRegistry: '0xa6a3e5aa35571ff6f7e6F64Df3E457F56551821a',
+    settlementVerifier: '0x56e06DD47711D8433D7160E28E6ad771a0fc7e2d',
+    deploymentBlock: 5_326_046n,
+    writable: false,
+  },
+] as const satisfies ReadonlyArray<{
+  key: string
+  label: string
+  invoiceRegistry: Address
+  trustRegistry: Address
+  settlementVerifier: Address
+  deploymentBlock: bigint
+  writable: boolean
+}>
+
 export const demoEvidence = {
   invoiceId:
     '0x538ff4b046151de88401b9774abde0ed1a26a39fb3976057b551ab1f1f38b740',

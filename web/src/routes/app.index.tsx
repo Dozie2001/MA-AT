@@ -23,15 +23,17 @@ import {
   demoEvidence,
   invoiceRegistryAbi,
   invoiceStatuses,
+  settlementDeployments,
   trustRegistryAbi,
   trustTiers,
 } from '../lib/contracts'
 import { formatTimestamp, formatUsdc, truncateAddress } from '../lib/format'
+import { aggregatePayerMetrics } from '../lib/trust-metrics'
 import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/')({ component: Dashboard })
 
-const invoiceRegistryDeploymentBlock = 5_326_046n
+const [currentDeployment, legacyDeployment] = settlementDeployments
 
 function parseInvoiceLocator(value: string): Hex | undefined {
   let candidate = value.trim()
@@ -56,44 +58,90 @@ function Dashboard() {
   const [lookupError, setLookupError] = useState<string>()
   const address = connection.address
 
-  const vendorInvoiceEvents = useContractEvents({
-    address: contracts.invoiceRegistry,
+  const currentVendorInvoiceEvents = useContractEvents({
+    address: currentDeployment.invoiceRegistry,
     abi: invoiceRegistryAbi,
     eventName: 'InvoiceCreated',
     args: address ? { vendor: address } : undefined,
-    fromBlock: invoiceRegistryDeploymentBlock,
+    fromBlock: currentDeployment.deploymentBlock,
     chainId: creditCoin3Testnet.id,
     query: { enabled: Boolean(address) },
   })
-  const buyerInvoiceEvents = useContractEvents({
-    address: contracts.invoiceRegistry,
+  const currentBuyerInvoiceEvents = useContractEvents({
+    address: currentDeployment.invoiceRegistry,
     abi: invoiceRegistryAbi,
     eventName: 'InvoiceCreated',
     args: address ? { buyer: address } : undefined,
-    fromBlock: invoiceRegistryDeploymentBlock,
+    fromBlock: currentDeployment.deploymentBlock,
+    chainId: creditCoin3Testnet.id,
+    query: { enabled: Boolean(address) },
+  })
+  const legacyVendorInvoiceEvents = useContractEvents({
+    address: legacyDeployment.invoiceRegistry,
+    abi: invoiceRegistryAbi,
+    eventName: 'InvoiceCreated',
+    args: address ? { vendor: address } : undefined,
+    fromBlock: legacyDeployment.deploymentBlock,
+    toBlock: currentDeployment.deploymentBlock - 1n,
+    chainId: creditCoin3Testnet.id,
+    query: { enabled: Boolean(address) },
+  })
+  const legacyBuyerInvoiceEvents = useContractEvents({
+    address: legacyDeployment.invoiceRegistry,
+    abi: invoiceRegistryAbi,
+    eventName: 'InvoiceCreated',
+    args: address ? { buyer: address } : undefined,
+    fromBlock: legacyDeployment.deploymentBlock,
+    toBlock: currentDeployment.deploymentBlock - 1n,
     chainId: creditCoin3Testnet.id,
     query: { enabled: Boolean(address) },
   })
 
   const discoveredInvoices = [
-    ...(vendorInvoiceEvents.data ?? []).flatMap((event) =>
+    ...(currentVendorInvoiceEvents.data ?? []).flatMap((event) =>
       event.args.invoiceId
         ? [
             {
               invoiceId: event.args.invoiceId,
               role: 'Vendor' as const,
               blockNumber: event.blockNumber,
+              deployment: currentDeployment,
             },
           ]
         : [],
     ),
-    ...(buyerInvoiceEvents.data ?? []).flatMap((event) =>
+    ...(currentBuyerInvoiceEvents.data ?? []).flatMap((event) =>
       event.args.invoiceId
         ? [
             {
               invoiceId: event.args.invoiceId,
               role: 'Buyer' as const,
               blockNumber: event.blockNumber,
+              deployment: currentDeployment,
+            },
+          ]
+        : [],
+    ),
+    ...(legacyVendorInvoiceEvents.data ?? []).flatMap((event) =>
+      event.args.invoiceId
+        ? [
+            {
+              invoiceId: event.args.invoiceId,
+              role: 'Vendor' as const,
+              blockNumber: event.blockNumber,
+              deployment: legacyDeployment,
+            },
+          ]
+        : [],
+    ),
+    ...(legacyBuyerInvoiceEvents.data ?? []).flatMap((event) =>
+      event.args.invoiceId
+        ? [
+            {
+              invoiceId: event.args.invoiceId,
+              role: 'Buyer' as const,
+              blockNumber: event.blockNumber,
+              deployment: legacyDeployment,
             },
           ]
         : [],
@@ -102,7 +150,9 @@ function Dashboard() {
     .filter(
       (invoice, index, invoices) =>
         invoices.findIndex(
-          (candidate) => candidate.invoiceId === invoice.invoiceId,
+          (candidate) =>
+            candidate.invoiceId === invoice.invoiceId &&
+            candidate.deployment.key === invoice.deployment.key,
         ) === index,
     )
     .sort((left, right) =>
@@ -113,18 +163,29 @@ function Dashboard() {
           : 1,
     )
 
-  const historyPending =
-    vendorInvoiceEvents.isPending || buyerInvoiceEvents.isPending
-  const historyFetching =
-    vendorInvoiceEvents.isFetching || buyerInvoiceEvents.isFetching
-  const historyError = vendorInvoiceEvents.error ?? buyerInvoiceEvents.error
+  const invoiceEventQueries = [
+    currentVendorInvoiceEvents,
+    currentBuyerInvoiceEvents,
+    legacyVendorInvoiceEvents,
+    legacyBuyerInvoiceEvents,
+  ]
+  const historyPending = invoiceEventQueries.some((query) => query.isPending)
+  const historyFetching = invoiceEventQueries.some((query) => query.isFetching)
+  const historyError = invoiceEventQueries.find((query) => query.error)?.error
 
   const trust = useReadContracts({
     allowFailure: false,
     contracts: address
       ? [
           {
-            address: contracts.trustRegistry,
+            address: currentDeployment.trustRegistry,
+            abi: trustRegistryAbi,
+            functionName: 'getPayerMetrics',
+            args: [address],
+            chainId: creditCoin3Testnet.id,
+          },
+          {
+            address: legacyDeployment.trustRegistry,
             abi: trustRegistryAbi,
             functionName: 'getPayerMetrics',
             args: [address],
@@ -142,8 +203,14 @@ function Dashboard() {
     query: { enabled: Boolean(address) },
   })
 
-  const metrics = trust.data?.[0]
-  const creditLimit = trust.data?.[1] ?? 0n
+  const metrics = trust.data
+    ? aggregatePayerMetrics([trust.data[0], trust.data[1]])
+    : undefined
+  const creditLimit = trust.data?.[2] ?? 0n
+
+  function refetchInvoiceHistory() {
+    for (const query of invoiceEventQueries) void query.refetch()
+  }
 
   function submitLookup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -219,25 +286,32 @@ function Dashboard() {
                 {trust.error.message.split('\n')[0]}
               </div>
             ) : metrics ? (
-              <div className="metric-grid">
-                <div className="metric-card">
-                  <span>Verified invoices</span>
-                  <strong>{metrics.settledInvoiceCount.toString()}</strong>
-                  <small>
-                    {metrics.onTimeSettlementCount.toString()} paid on time
-                  </small>
+              <>
+                <div className="metric-grid">
+                  <div className="metric-card">
+                    <span>Verified invoices</span>
+                    <strong>{metrics.settledInvoiceCount.toString()}</strong>
+                    <small>
+                      {metrics.onTimeSettlementCount.toString()} paid on time ·
+                      lifetime
+                    </small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Verified volume</span>
+                    <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
+                    <small>Sepolia USDC · all deployments</small>
+                  </div>
+                  <div className="metric-card">
+                    <span>Credit policy limit</span>
+                    <strong>${formatUsdc(creditLimit)}</strong>
+                    <small>{trustTiers[metrics.tier]} terms</small>
+                  </div>
                 </div>
-                <div className="metric-card">
-                  <span>Verified volume</span>
-                  <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
-                  <small>Sepolia USDC</small>
+                <div className="inline-notice">
+                  Lifetime trust combines verified v1 and v2 settlements. The
+                  credit-policy limit is the active v2 contract output.
                 </div>
-                <div className="metric-card">
-                  <span>Credit policy limit</span>
-                  <strong>${formatUsdc(creditLimit)}</strong>
-                  <small>{trustTiers[metrics.tier]} terms</small>
-                </div>
-              </div>
+              </>
             ) : null}
           </section>
 
@@ -293,17 +367,14 @@ function Dashboard() {
                 <h2>Your invoices</h2>
                 <p>
                   Created by or assigned to this wallet, reconstructed directly
-                  from InvoiceRegistry events.
+                  from current and legacy InvoiceRegistry events.
                 </p>
               </div>
               {address ? (
                 <button
                   className="icon-button"
                   type="button"
-                  onClick={() => {
-                    void vendorInvoiceEvents.refetch()
-                    void buyerInvoiceEvents.refetch()
-                  }}
+                  onClick={refetchInvoiceHistory}
                   disabled={historyFetching}
                   aria-label="Refresh invoice history"
                 >
@@ -327,7 +398,7 @@ function Dashboard() {
                 <InvoiceCardSkeleton />
                 <InvoiceCardSkeleton />
               </div>
-            ) : historyError ? (
+            ) : historyError && !discoveredInvoices.length ? (
               <div className="empty-state">
                 <div>
                   <ShieldCheck size={30} />
@@ -336,10 +407,7 @@ function Dashboard() {
                   <button
                     className="button-secondary empty-state-action"
                     type="button"
-                    onClick={() => {
-                      void vendorInvoiceEvents.refetch()
-                      void buyerInvoiceEvents.refetch()
-                    }}
+                    onClick={refetchInvoiceHistory}
                   >
                     Try again
                   </button>
@@ -349,10 +417,11 @@ function Dashboard() {
               <div className="invoice-list">
                 {discoveredInvoices.map((invoice) => (
                   <OnchainInvoiceCard
-                    key={invoice.invoiceId}
+                    key={`${invoice.deployment.key}-${invoice.invoiceId}`}
                     invoiceId={invoice.invoiceId}
                     role={invoice.role}
                     viewer={address}
+                    deployment={invoice.deployment}
                   />
                 ))}
               </div>
@@ -427,13 +496,15 @@ function OnchainInvoiceCard({
   invoiceId,
   role,
   viewer,
+  deployment,
 }: {
   invoiceId: Hex
   role: 'Vendor' | 'Buyer'
   viewer: Address
+  deployment: (typeof settlementDeployments)[number]
 }) {
   const invoiceQuery = useReadContract({
-    address: contracts.invoiceRegistry,
+    address: deployment.invoiceRegistry,
     abi: invoiceRegistryAbi,
     functionName: 'getInvoice',
     args: [invoiceId],
@@ -481,7 +552,8 @@ function OnchainInvoiceCard({
         <div>
           <h3>{truncateAddress(invoiceId, 10)}</h3>
           <span className="invoice-role">
-            {role} view · {invoice.vendor === viewer ? 'Issued' : 'Received'}
+            {role} view · {invoice.vendor === viewer ? 'Issued' : 'Received'} ·{' '}
+            {deployment.label}
           </span>
         </div>
         <StatusPill tone={tone}>{status}</StatusPill>
