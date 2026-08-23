@@ -93,58 +93,6 @@ rules.
 > **Ethereum moves the money. Attestcoin proves the payment. Creditcoin remembers
 > the business relationship.**
 
-### Current chain scope
-
-Ma'at is cross-chain because payment happens on an Attestcoin-supported source
-chain while invoice settlement and trust logic execute on Creditcoin.
-
-- **Working MVP:** Ethereum Sepolia payments -> Creditcoin CC3 Testnet.
-- **Published mainnet path:** Ethereum Mainnet -> Creditcoin CC3 Mainnet.
-- **Solana:** not listed in the current Attestcoin supported-chain matrix. A
-  Solana integration is therefore a conditional roadmap item, not a current
-  product capability.
-
-When Attestcoin officially supports Solana, Ma'at would still need a Solana
-payment program or adapter, a Solana transaction/event decoder on Creditcoin,
-proof-worker support, wallet UX, and end-to-end security tests.
-
-Source: [Attestcoin Protocol Chains and Environments](https://docs.creditcoin.org/attestcoin-protocol/attestcoin-protocol-chains-environments)
-
----
-
-## Anchor Real-World Use Case
-
-### Cross-border supplier settlement
-
-A distributor buys inventory from multiple overseas suppliers and settles those
-invoices in stablecoins.
-
-1. Each supplier invoice is committed on Creditcoin with the buyer, vendor,
-   exact amount, and due date.
-2. The distributor pays each supplier directly in USDC on Ethereum.
-3. Attestcoin independently proves the Ethereum payment to Creditcoin.
-4. Ma'at reconciles the exact obligation and updates paid, received, on-time,
-   and late settlement history.
-5. The finance team can settle compatible invoice proofs in batches of up to
-   ten.
-6. With sufficient real-world controls, a lender or treasury system could use
-   the verified history when offering supplier terms or working capital.
-
-### Why a business would care
-
-- Less manual matching between invoices and blockchain transfers
-- An audit trail that counterparties can independently inspect
-- Direct vendor payment without Ma'at taking custody
-- Durable history that survives application or contract upgrades
-- A path from payment operations to data-driven supplier finance
-
-### Honest boundary
-
-The current MVP proves settlement behavior. A production supplier-finance
-product would also require business identity, legal invoice validation,
-fulfillment evidence, sanctions/compliance controls, dispute handling, validated
-underwriting, and appropriate regulated partners.
-
 ---
 
 ## Ten-Slide Deck
@@ -298,20 +246,14 @@ Invoice + payer trust + vendor history
 transaction success. Those values are derived from the receipt accepted through
 Attestcoin and matched against Creditcoin invoice terms.”
 
-### Slide 9: Roadmap from settlement to financing
+### Slide 9: Commercial wedge and expansion
 
 **On slide**
 
-| Phase                     | Business outcome                                             | Product work                                                                                                               |
-| ------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Now: prove and settle** | Working cross-chain invoice reconciliation                   | Ethereum Sepolia, Creditcoin Testnet, Attestcoin verification, batch settlement, lifetime audit history                    |
-| **Next: pilot safely**    | Businesses can test recurring supplier workflows             | persistent job queue, monitoring, role-based approvals, partial payments, refunds, disputes, KYB/document integrations     |
-| **Then: expand rails**    | Move from testnet workflow to supported production corridors | security review, Ethereum/Creditcoin mainnet deployment, additional EVM adapters only where Attestcoin support is verified |
-| **Later: finance trust**  | Verified history becomes usable for capital allocation       | supplier-finance integrations, treasury API/SDK, risk-policy modules, agent-readable controls                              |
+**Start:** Cross-chain invoice settlement and reconciliation
 
-**Conditional ecosystem expansion:** add Solana only after it appears in
-Attestcoin's official supported-chain matrix and Ma'at completes a Solana source
-adapter, decoder, wallet flow, and end-to-end verification tests.
+**Expand:** Supplier terms, treasury APIs, risk monitoring, and agent-readable
+policy
 
 **Potential business model**
 
@@ -327,15 +269,11 @@ adapter, decoder, wallet flow, and end-to-end verification tests.
 
 **Speaker note**
 
-“The wedge is reconciliation, a concrete workflow with an obvious buyer. We
-first make the workflow pilot-ready, then move to supported mainnet corridors.
-The longer-term asset is the verified relationship history produced by
-settlement.”
+“The wedge is reconciliation, a concrete workflow with an obvious buyer. The
+longer-term asset is the verified relationship history produced by settlement.”
 
 These are business-model hypotheses. Do not present them as current revenue,
 users, partnerships, or validated demand.
-
-Roadmap phases are product intent, not completed milestones or guaranteed dates.
 
 ### Slide 10: Founder, proof, and ask
 
