@@ -1,0 +1,1300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ma'at - Product Pitch</title>
+    <style>
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("../../web/node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "Instrument Serif";
+        src: url("../../web/node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2")
+          format("woff2");
+        font-style: italic;
+      }
+      @font-face {
+        font-family: "Inter";
+        src: url("../../web/node_modules/@fontsource-variable/inter/files/inter-latin-standard-normal.woff2")
+          format("woff2");
+      }
+      @font-face {
+        font-family: "JetBrains Mono";
+        src: url("../../web/node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2")
+          format("woff2");
+      }
+
+      :root {
+        --ink: #01090d;
+        --panel: #02141b;
+        --panel-2: #061d25;
+        --teal: #0ac5b4;
+        --copper: #df8352;
+        --paper: #f6f1e9;
+        --muted: #9ca9a8;
+        --line: #17343d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        color: var(--paper);
+        background: #071015;
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        display: grid;
+        gap: 28px;
+        justify-content: center;
+        padding: 28px;
+      }
+
+      .page {
+        position: relative;
+        width: 1280px;
+        height: 720px;
+        overflow: hidden;
+        padding: 58px 66px;
+        background:
+          linear-gradient(112deg, rgba(223, 131, 82, 0.07), transparent 35%),
+          radial-gradient(
+            circle at 85% 18%,
+            rgba(10, 197, 180, 0.08),
+            transparent 32%
+          ),
+          var(--ink);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+        break-after: page;
+      }
+
+      .page::after {
+        position: absolute;
+        right: -180px;
+        bottom: -250px;
+        width: 580px;
+        height: 580px;
+        border: 1px solid rgba(10, 197, 180, 0.12);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .page-number {
+        position: absolute;
+        right: 66px;
+        bottom: 29px;
+        color: #6f7f80;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+      }
+
+      .kicker {
+        color: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: "Instrument Serif", serif;
+        font-weight: 400;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 26px 0 22px;
+        font-size: 88px;
+        line-height: 0.92;
+        letter-spacing: -0.045em;
+      }
+
+      h1 em {
+        color: var(--teal);
+        font-weight: 400;
+      }
+
+      h2 {
+        margin: 18px 0 24px;
+        font-size: 54px;
+        line-height: 0.98;
+        letter-spacing: -0.025em;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        font-size: 27px;
+      }
+
+      p {
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .copper {
+        color: var(--copper);
+      }
+
+      .teal {
+        color: var(--teal);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .rule {
+        width: 92px;
+        height: 2px;
+        margin: 20px 0;
+        background: linear-gradient(90deg, var(--teal), var(--copper));
+      }
+
+      .brand-lockup {
+        display: flex;
+        gap: 13px;
+        align-items: center;
+        font-family: "Instrument Serif", serif;
+        font-size: 28px;
+        letter-spacing: 0.08em;
+      }
+
+      .brand-lockup .mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border: 1px solid var(--copper);
+        color: var(--teal);
+        border-radius: 50% 50% 45% 45%;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 15px;
+      }
+
+      .cover-grid,
+      .two-col {
+        display: grid;
+        grid-template-columns: 1.12fr 0.88fr;
+        gap: 54px;
+        align-items: center;
+        height: 100%;
+      }
+
+      .cover-copy > p {
+        max-width: 650px;
+      }
+
+      .cover-meta {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        padding: 9px 13px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .tag.live {
+        border-color: rgba(10, 197, 180, 0.45);
+        color: var(--teal);
+      }
+
+      .scale-art {
+        position: relative;
+        display: grid;
+        height: 470px;
+        place-items: center;
+        border: 1px solid var(--line);
+        background: rgba(2, 20, 27, 0.72);
+        box-shadow: 12px 12px 0 #000;
+      }
+
+      .scale-art::before,
+      .scale-art::after {
+        position: absolute;
+        width: 250px;
+        height: 250px;
+        border: 1px dashed rgba(10, 197, 180, 0.35);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .scale-art::after {
+        width: 340px;
+        height: 340px;
+        border-color: rgba(223, 131, 82, 0.24);
+      }
+
+      .scale-art .beam {
+        position: relative;
+        z-index: 2;
+        width: 265px;
+        height: 2px;
+        background: var(--paper);
+      }
+
+      .scale-art .beam::before,
+      .scale-art .beam::after {
+        position: absolute;
+        top: -5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--teal);
+        content: "";
+      }
+
+      .scale-art .beam::before {
+        left: 0;
+      }
+
+      .scale-art .beam::after {
+        right: 0;
+      }
+
+      .scale-art .stem {
+        position: absolute;
+        z-index: 1;
+        width: 2px;
+        height: 250px;
+        background: var(--paper);
+      }
+
+      .scale-labels {
+        position: absolute;
+        right: 60px;
+        bottom: 96px;
+        left: 60px;
+        z-index: 3;
+        display: flex;
+        justify-content: space-between;
+        color: var(--paper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+
+      .statement {
+        max-width: 1020px;
+        margin-top: 50px;
+        font-family: "Instrument Serif", serif;
+        font-size: 45px;
+        line-height: 1.08;
+      }
+
+      .statement strong {
+        color: var(--teal);
+        font-weight: 400;
+      }
+
+      .fact-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        margin-top: 42px;
+        border: 1px solid var(--line);
+        background: var(--line);
+      }
+
+      .fact {
+        min-height: 155px;
+        padding: 24px;
+        background: var(--panel);
+      }
+
+      .fact strong {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--paper);
+        font-family: "Instrument Serif", serif;
+        font-size: 38px;
+        font-weight: 400;
+      }
+
+      .fact span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .pain-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .pain {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 14px;
+        align-items: start;
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        background: rgba(2, 20, 27, 0.72);
+      }
+
+      .pain b {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 1px solid rgba(223, 131, 82, 0.5);
+        border-radius: 50%;
+        color: var(--copper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+      }
+
+      .pain strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 15px;
+      }
+
+      .pain span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .quote-card {
+        padding: 40px;
+        border: 1px solid rgba(223, 131, 82, 0.45);
+        background: linear-gradient(
+          145deg,
+          rgba(223, 131, 82, 0.11),
+          rgba(2, 20, 27, 0.9)
+        );
+        box-shadow: 10px 10px 0 #000;
+      }
+
+      .quote-card p {
+        color: var(--paper);
+        font-family: "Instrument Serif", serif;
+        font-size: 34px;
+        line-height: 1.15;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-top: 46px;
+      }
+
+      .flow-step {
+        position: relative;
+        min-height: 210px;
+        padding: 24px 20px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .flow-step:not(:last-child)::after {
+        position: absolute;
+        z-index: 2;
+        top: 49px;
+        right: -20px;
+        color: var(--copper);
+        content: "->";
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .flow-step .num {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        margin-bottom: 28px;
+        place-items: center;
+        border-radius: 50%;
+        color: var(--ink);
+        background: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .flow-step p {
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .arch {
+        display: grid;
+        grid-template-columns: 1fr 80px 1fr 80px 1fr;
+        align-items: center;
+        margin-top: 42px;
+      }
+
+      .arch-node {
+        min-height: 275px;
+        padding: 26px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .arch-node .network {
+        color: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.13em;
+      }
+
+      .arch-node h3 {
+        margin-top: 18px;
+      }
+
+      .arch-node ul {
+        padding: 0;
+        list-style: none;
+      }
+
+      .arch-node li {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .arch-arrow {
+        color: var(--copper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 22px;
+        text-align: center;
+      }
+
+      .screen {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        box-shadow: 10px 10px 0 #000;
+      }
+
+      .screen img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+      }
+
+      .screen-pair {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 26px;
+        height: 500px;
+        margin-top: 24px;
+      }
+
+      .screen-caption {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        left: 14px;
+        padding: 12px;
+        border: 1px solid rgba(10, 197, 180, 0.35);
+        color: var(--paper);
+        background: rgba(1, 9, 13, 0.92);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+      }
+
+      .screen-wrap {
+        position: relative;
+        min-height: 0;
+      }
+
+      .proof-layout {
+        display: grid;
+        grid-template-columns: 0.62fr 0.38fr;
+        gap: 34px;
+        height: 565px;
+        margin-top: 20px;
+      }
+
+      .proof-layout .screen img {
+        object-fit: cover;
+        object-position: center 52%;
+      }
+
+      .evidence-stack {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .evidence-card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .evidence-card span,
+      .evidence-card code {
+        display: block;
+      }
+
+      .evidence-card span {
+        margin-bottom: 7px;
+        color: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .evidence-card strong {
+        font-family: "Instrument Serif", serif;
+        font-size: 26px;
+        font-weight: 400;
+      }
+
+      .evidence-card code {
+        margin-top: 7px;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 8px;
+        overflow-wrap: anywhere;
+      }
+
+      .contract-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .contract {
+        min-height: 106px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .contract b,
+      .contract span {
+        display: block;
+      }
+
+      .contract b {
+        margin-bottom: 12px;
+        font-size: 12px;
+      }
+
+      .contract span {
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 8px;
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .metric {
+        padding: 22px;
+        border-top: 2px solid var(--teal);
+        background: var(--panel);
+      }
+
+      .metric strong,
+      .metric span {
+        display: block;
+      }
+
+      .metric strong {
+        color: var(--paper);
+        font-family: "Instrument Serif", serif;
+        font-size: 44px;
+        font-weight: 400;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .palette {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-top: 32px;
+      }
+
+      .swatch {
+        display: grid;
+        min-height: 155px;
+        padding: 16px;
+        align-content: end;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      .swatch b,
+      .swatch span {
+        display: block;
+      }
+
+      .swatch b {
+        font-size: 13px;
+      }
+
+      .swatch span {
+        margin-top: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+      }
+
+      .type-sample {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+        margin-top: 26px;
+      }
+
+      .type-card {
+        padding: 20px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .type-card b {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 8px;
+        letter-spacing: 0.12em;
+      }
+
+      .type-card.serif span {
+        font-family: "Instrument Serif", serif;
+        font-size: 29px;
+      }
+
+      .type-card.inter span {
+        font-family: "Inter", sans-serif;
+        font-size: 17px;
+      }
+
+      .type-card.mono span {
+        color: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+      }
+
+      .deck-map {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .deck-item {
+        min-height: 112px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .deck-item b {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--teal);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+      }
+
+      .deck-item span {
+        font-family: "Instrument Serif", serif;
+        font-size: 23px;
+      }
+
+      .founder-gap {
+        padding: 26px;
+        border: 1px solid rgba(223, 131, 82, 0.5);
+        background: rgba(223, 131, 82, 0.08);
+      }
+
+      .founder-gap strong {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--copper);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.13em;
+      }
+
+      .founder-gap p {
+        margin-bottom: 0;
+        font-size: 14px;
+      }
+
+      .founder-card {
+        display: grid;
+        grid-template-columns: 118px 1fr;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 18px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .founder-card img {
+        width: 118px;
+        height: 118px;
+        border: 1px solid rgba(223, 131, 82, 0.55);
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .founder-card strong,
+      .founder-card span,
+      .founder-card a {
+        display: block;
+      }
+
+      .founder-card strong {
+        font-family: "Instrument Serif", serif;
+        font-size: 32px;
+        font-weight: 400;
+      }
+
+      .founder-card span {
+        margin: 4px 0 9px;
+        color: var(--teal);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .founder-card p {
+        margin-bottom: 8px;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .founder-card a {
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 8px;
+      }
+
+      .closing-line {
+        max-width: 1060px;
+        margin-top: 26px;
+        font-family: "Instrument Serif", serif;
+        font-size: 40px;
+        line-height: 1.04;
+      }
+
+      .links {
+        display: flex;
+        gap: 12px;
+        margin-top: 44px;
+      }
+
+      .link-card {
+        padding: 16px 19px;
+        border: 1px solid var(--line);
+        color: var(--paper);
+        background: var(--panel);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+      }
+
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      @media print {
+        html,
+        body {
+          background: transparent;
+        }
+
+        body {
+          display: block;
+          padding: 0;
+        }
+
+        .page {
+          width: 13.333in;
+          height: 7.5in;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="page">
+      <div class="cover-grid">
+        <div class="cover-copy">
+          <div class="brand-lockup"><span class="mark">M</span> MA'AT</div>
+          <div class="kicker" style="margin-top: 70px">
+            Creditcoin BUIDL For The Real World / Attestcoin
+          </div>
+          <h1>Business trust, <em>proven in settlement.</em></h1>
+          <p>
+            Cross-chain supplier payments become reconciled invoices, durable
+            counterparty history, and machine-readable policy on Creditcoin.
+          </p>
+          <div class="cover-meta">
+            <span class="tag live">Working on two testnets</span>
+            <span class="tag">Attestcoin native verification</span>
+            <span class="tag">Atomic batch settlement</span>
+            <span class="tag">Non-custodial USDC</span>
+            <span class="tag">EVM-first roadmap</span>
+          </div>
+        </div>
+        <div class="scale-art">
+          <div class="stem"></div>
+          <div class="beam"></div>
+          <div class="scale-labels"><span>ETH</span><span>CTC</span></div>
+        </div>
+      </div>
+      <span class="page-number">01 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">The problem</div>
+      <p class="statement">
+        A distributor can pay overseas suppliers in stablecoins, but matching
+        those payments to invoices and reusing the history still depends on
+        <strong>private databases and manual trust.</strong>
+      </p>
+      <div class="fact-grid">
+        <div class="fact">
+          <strong>Split</strong
+          ><span
+            >Invoice terms and payment evidence live on different chains.</span
+          >
+        </div>
+        <div class="fact">
+          <strong>Private</strong
+          ><span
+            >A platform reconciles the payment inside its own database.</span
+          >
+        </div>
+        <div class="fact">
+          <strong>Manual</strong
+          ><span
+            >Finance teams reconcile transaction hashes against
+            obligations.</span
+          >
+        </div>
+        <div class="fact">
+          <strong>Trapped</strong
+          ><span>Payment history rarely becomes portable supplier trust.</span>
+        </div>
+      </div>
+      <span class="page-number">02 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="two-col">
+        <div>
+          <div class="kicker">Why now</div>
+          <h2>Stablecoin settlement scaled. Portable trust did not.</h2>
+          <div class="pain-list">
+            <div class="pain">
+              <b>01</b>
+              <div>
+                <strong>$76B annualized B2B run rate</strong
+                ><span
+                  >Characterized stablecoin B2B payments in August 2025, up 255%
+                  year over year.</span
+                >
+              </div>
+            </div>
+            <div class="pain">
+              <b>02</b>
+              <div>
+                <strong>$274B stablecoin supply</strong
+                ><span
+                  >Visa reports supply grew more than 50% during 2025 as
+                  institutional infrastructure matured.</span
+                >
+              </div>
+            </div>
+            <div class="pain">
+              <b>03</b>
+              <div>
+                <strong>Attestcoin makes the missing step possible</strong
+                ><span
+                  >Creditcoin contracts can verify and use supported
+                  foreign-chain transactions without trusting one oracle
+                  operator.</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="quote-card">
+          <div class="kicker copper">The timing</div>
+          <p>
+            Payment rails became programmable before business trust became
+            portable.
+          </p>
+          <div class="rule"></div>
+          <span class="muted">
+            Sources:
+            <a
+              href="https://about.artemis.ai/resources/stablecoin-update-october-2025"
+              >Artemis, Stablecoin Payments (Oct 2025)</a
+            >;
+            <a
+              href="https://corporate.visa.com/en/services/visa-consulting-analytics/insights/vca-stablecoin-strategy.html"
+              >Visa, Stablecoin Strategy (2026)</a
+            >.
+          </span>
+        </div>
+      </div>
+      <span class="page-number">03 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">The solution</div>
+      <h2>Commit. Pay. Prove. Settle. Remember.</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <span class="num">1</span><strong>Commit terms</strong>
+          <p>Vendor, buyer, amount, due time, and metadata on Creditcoin.</p>
+        </div>
+        <div class="flow-step">
+          <span class="num">2</span><strong>Pay directly</strong>
+          <p>Official Sepolia USDC moves from buyer to vendor.</p>
+        </div>
+        <div class="flow-step">
+          <span class="num">3</span><strong>Generate proof</strong>
+          <p>
+            Attestcoin returns transaction, Merkle, and continuity evidence.
+          </p>
+        </div>
+        <div class="flow-step">
+          <span class="num">4</span><strong>Verify receipt</strong>
+          <p>Creditcoin validates and Ma'at decodes exact payment semantics.</p>
+        </div>
+        <div class="flow-step">
+          <span class="num">5</span><strong>Update policy</strong>
+          <p>Invoice and counterparty trust commit atomically.</p>
+        </div>
+      </div>
+      <p style="margin-top: 28px">
+        The worker transports evidence. It does not decide who paid whom, how
+        much was paid, or which invoice should settle. Compatible proofs can be
+        submitted in batches of up to ten.
+      </p>
+      <span class="page-number">04 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">Attestcoin is load-bearing</div>
+      <h2>Remove the protocol and the trust model breaks.</h2>
+      <div class="arch">
+        <div class="arch-node">
+          <span class="network">ETHEREUM SEPOLIA</span>
+          <h3>SettlementRouter</h3>
+          <ul>
+            <li>Immutable official USDC</li>
+            <li>Direct vendor payment</li>
+            <li>Canonical InvoicePaid event</li>
+          </ul>
+        </div>
+        <div class="arch-arrow">-&gt;</div>
+        <div class="arch-node">
+          <span class="network">ATTESTCOIN</span>
+          <h3>Verified source query</h3>
+          <ul>
+            <li>Attested-height coverage</li>
+            <li>Merkle proof</li>
+            <li>Shared batch continuity proof</li>
+          </ul>
+        </div>
+        <div class="arch-arrow">-&gt;</div>
+        <div class="arch-node">
+          <span class="network">CREDITCOIN 102031</span>
+          <h3>Business logic</h3>
+          <ul>
+            <li>Native precompile verification</li>
+            <li>Semantic receipt decoding</li>
+            <li>Atomic trust and policy</li>
+          </ul>
+        </div>
+      </div>
+      <span class="page-number">05 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">Working product</div>
+      <h2>One workflow from obligation to reusable trust.</h2>
+      <div class="screen-pair">
+        <div class="screen-wrap screen">
+          <img src="assets/landing.png" alt="Ma'at landing page" />
+          <div class="screen-caption">
+            POSITIONING / NO BRIDGE / NO CENTRALIZED ORACLE / NO CUSTODY
+          </div>
+        </div>
+        <div class="evidence-stack">
+          <div class="evidence-card">
+            <span>Commit</span><strong>Dynamic invoice terms</strong
+            ><code>buyer / vendor / amount / due date / metadata</code>
+          </div>
+          <div class="evidence-card">
+            <span>Pay</span><strong>Direct USDC settlement</strong
+            ><code>Buyer pays vendor; Ma'at never takes custody</code>
+          </div>
+          <div class="evidence-card">
+            <span>Prove</span><strong>Inspectable Attestcoin receipt</strong
+            ><code>Source transaction / height / index / proof metadata</code>
+          </div>
+          <div class="evidence-card">
+            <span>Remember</span><strong>Paid and received history</strong
+            ><code>Lifetime view across current and legacy deployments</code>
+          </div>
+        </div>
+      </div>
+      <span class="page-number">06 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">New solutions</div>
+      <h2>Batch the operation. Preserve the relationship.</h2>
+      <div class="two-col" style="height: 500px">
+        <div class="quote-card">
+          <div class="kicker copper">Treasury scale</div>
+          <p>
+            <span class="teal">2–10 payments.</span> One shared continuity
+            proof. One atomic Creditcoin transaction.
+          </p>
+          <div class="rule"></div>
+          <span class="muted mono" style="font-size: 10px">
+            ALL SETTLE CORRECTLY / OR THE COMPLETE BATCH REVERTS
+          </span>
+        </div>
+        <div class="evidence-stack">
+          <div class="evidence-card">
+            <span>Live batch</span
+            ><strong class="teal">2 invoices settled</strong
+            ><code>0x30e1b646...6755c6b56</code>
+          </div>
+          <div class="evidence-card">
+            <span>Exact controls</span><strong>Per-invoice validation</strong
+            ><code>payer / vendor / amount / timestamp / success</code>
+          </div>
+          <div class="evidence-card">
+            <span>Audit continuity</span><strong>No disappearing history</strong
+            ><code>Legacy records resolve read-only after upgrades</code>
+          </div>
+          <div class="evidence-card">
+            <span>Wallet truth</span><strong>Paid ≠ received</strong
+            ><code>Buyer and vendor volume shown separately</code>
+          </div>
+          <div class="evidence-card">
+            <span>Business outcome</span
+            ><strong class="copper">Reusable trade reference</strong
+            ><code>Reconciliation today; financing inputs tomorrow</code>
+          </div>
+        </div>
+      </div>
+      <span class="page-number">07 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">Public evidence, not promises</div>
+      <h2>Source-verified and tested end to end.</h2>
+      <div class="metric-row">
+        <div class="metric">
+          <strong>46</strong><span>passing contract tests</span>
+        </div>
+        <div class="metric">
+          <strong>21</strong><span>passing worker tests</span>
+        </div>
+        <div class="metric">
+          <strong>2–10</strong><span>payments per atomic batch</span>
+        </div>
+        <div class="metric">
+          <strong>2x</strong><span>replay protection layers</span>
+        </div>
+      </div>
+      <div class="contract-grid">
+        <a
+          class="contract"
+          href="https://sepolia.etherscan.io/address/0xCf3D8C3a3ADD06E8d4737f3AfF120e3257122fAe#code"
+          ><b>SettlementRouter</b><span>SEPOLIA</span
+          ><span>0xCf3D...2fAe</span></a
+        >
+        <a
+          class="contract"
+          href="https://creditcoin-testnet.blockscout.com/address/0xACD97e1980ba6E7E5eD142e1064E7929E43f1405#code"
+          ><b>InvoiceRegistry</b><span>CREDITCOIN</span
+          ><span>0xACD9...1405</span></a
+        >
+        <a
+          class="contract"
+          href="https://creditcoin-testnet.blockscout.com/address/0x075B6a3c8526413856Bb9a418C37fbE1aBA1BcA5#code"
+          ><b>TrustRegistry</b><span>CREDITCOIN</span
+          ><span>0x075B...BcA5</span></a
+        >
+        <a
+          class="contract"
+          href="https://creditcoin-testnet.blockscout.com/address/0x99d48BFA0a9713B9BDec032bd07785D010C8c666#code"
+          ><b>Verifier</b><span>CREDITCOIN</span><span>0x99d4...6666</span></a
+        >
+        <a
+          class="contract"
+          href="https://creditcoin-testnet.blockscout.com/address/0xd02F1f044B20551763eF815778B561969E3EF70D#code"
+          ><b>CreditPolicy</b><span>CREDITCOIN</span
+          ><span>0xd02F...F70D</span></a
+        >
+      </div>
+      <p style="margin-top: 24px">
+        Live proof acceptance, exact reconciliation, trust updates, credit
+        policy, and replay rejection are independently inspectable on public
+        explorers.
+      </p>
+      <span class="page-number">08 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="kicker">EVM-first roadmap</div>
+      <h2>Prove settlement. Expand rails. Finance trust.</h2>
+      <div class="deck-map">
+        <div class="deck-item">
+          <b>NOW / SHIPPED</b
+          ><span
+            >Ethereum ↔ Creditcoin invoices, batch proofs, durable history</span
+          >
+        </div>
+        <div class="deck-item">
+          <b>NEXT / OPERATE</b
+          ><span>Durable queues, monitoring, treasury approvals, pilots</span>
+        </div>
+        <div class="deck-item">
+          <b>ADD / CONTROL</b
+          ><span>Partial payments, refunds, disputes, KYB and documents</span>
+        </div>
+        <div class="deck-item">
+          <b>EXPAND / EVM</b
+          ><span>Ethereum mainnet, then Attestcoin-supported EVM chains</span>
+        </div>
+        <div class="deck-item">
+          <b>FINANCE / API</b
+          ><span
+            >Supplier finance, treasury SDK, configurable policy modules</span
+          >
+        </div>
+        <div class="deck-item">
+          <b>EVALUATE / LATER</b
+          ><span>Non-EVM chains only after official protocol support</span>
+        </div>
+      </div>
+      <p style="margin-top: 20px">
+        Current support is Ethereum-based. Additional chains are roadmap intent,
+        gated by Attestcoin support and complete adapter, decoder, wallet, and
+        security validation. No unsupported chain is claimed today.
+      </p>
+      <span class="page-number">09 / 10</span>
+    </section>
+
+    <section class="page">
+      <div class="two-col">
+        <div>
+          <div class="kicker">Solo founder</div>
+          <h2>
+            Built across contracts, proof infrastructure, cloud, and product.
+          </h2>
+          <div class="founder-card">
+            <img src="assets/founder.png" alt="Doize's GitHub profile image" />
+            <div>
+              <strong>Doize</strong>
+              <span>Solo Founder &amp; Software Engineer</span>
+              <p>
+                Experience building across AI, blockchain security, and
+                robotics.
+              </p>
+              <a href="https://github.com/Dozie2001">GITHUB / @DOZIE2001</a>
+              <a href="https://www.linkedin.com/in/chidozie-david-982144203/"
+                >LINKEDIN / CHIDOZIE DAVID</a
+              >
+            </div>
+          </div>
+          <p>
+            Ma'at's end-to-end scope includes Solidity, Attestcoin receipt
+            decoding, TypeScript automation, resilient RPC operations, and a
+            responsive React application.
+          </p>
+        </div>
+        <div>
+          <div class="founder-gap">
+            <strong>THE ASK</strong>
+            <p>
+              Hackathon recognition, CEIP fast-track consideration, Creditcoin
+              ecosystem support, and B2B pilot partners for the next production
+              milestone.
+            </p>
+          </div>
+          <p class="closing-line">
+            Ethereum moved the money.
+            <span class="teal">Attestcoin proved the payment.</span> Creditcoin
+            turned that proof into reusable business trust.
+          </p>
+          <div class="links">
+            <a class="link-card" href="https://ma-at-xi.vercel.app">LIVE APP</a>
+            <a class="link-card" href="https://github.com/Dozie2001/MA-AT"
+              >GITHUB</a
+            >
+          </div>
+        </div>
+      </div>
+      <span class="page-number">10 / 10</span>
+    </section>
+  </body>
+</html>
