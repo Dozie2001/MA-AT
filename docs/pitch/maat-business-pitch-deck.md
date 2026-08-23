@@ -2,13 +2,10 @@
 
 ## Business-Friendly Pitch Deck Brief
 
-**Audience:** Creditcoin BUIDL For The Real World judges
-
-**Stage:** Working testnet MVP
-
-**Founder:** Doize, Solo Founder and Software Engineer
-
-**Product:** [ma-at-xi.vercel.app](https://ma-at-xi.vercel.app)
+**Audience:** Creditcoin BUIDL For The Real World judges  
+**Stage:** Working testnet MVP  
+**Founder:** Doize, Solo Founder and Software Engineer  
+**Product:** [ma-at-xi.vercel.app](https://ma-at-xi.vercel.app)  
 **Repository:** [github.com/Dozie2001/MA-AT](https://github.com/Dozie2001/MA-AT)
 
 > **Business trust, proven in settlement.**
@@ -250,8 +247,7 @@ Attestcoin and matched against Creditcoin invoice terms.”
 
 **On slide**
 
-**Start:** Cross-chain invoice settlement and reconciliation
-
+**Start:** Cross-chain invoice settlement and reconciliation  
 **Expand:** Supplier terms, treasury APIs, risk monitoring, and agent-readable
 policy
 
