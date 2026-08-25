@@ -21,20 +21,20 @@ export const Route = createFileRoute('/')({ component: Home })
 const workflow = [
   {
     number: '01',
-    title: 'Issue terms',
+    title: 'Issue invoice',
     copy: 'The vendor creates an exact USDC invoice on Creditcoin with buyer, amount, due date, and metadata commitment.',
     chain: 'CREDITCOIN',
   },
   {
     number: '02',
-    title: 'Pay on Ethereum',
-    copy: 'The buyer pays official Sepolia USDC directly to the vendor through the non-custodial settlement router.',
-    chain: 'SEPOLIA',
+    title: 'Pay in USDC',
+    copy: 'The buyer pays USDC directly to the vendor through the non-custodial Ethereum settlement rail.',
+    chain: 'ETHEREUM',
   },
   {
     number: '03',
-    title: 'Verify, then settle',
-    copy: 'Attestcoin proves the source transaction. Creditcoin settles the invoice and updates payer trust atomically.',
+    title: 'Verify and reconcile',
+    copy: 'Attestcoin proves the payment. Creditcoin reconciles the invoice and updates counterparty history atomically.',
     chain: 'ATTESTCOIN',
   },
 ]
@@ -53,31 +53,30 @@ function Home() {
           <div className="hero-grid">
             <motion.div className="hero-copy" {...enter}>
               <span className="hero-kicker">
-                <span className="pulse-dot" /> LIVE ON TWO TESTNETS
+                <span className="pulse-dot" /> USDC SUPPLIER SETTLEMENT
               </span>
               <h1>
-                Business trust,
+                Supplier payments,
                 <br />
-                <em>proven in settlement.</em>
+                <em>verified and reconciled.</em>
               </h1>
               <p>
-                Ma'at turns Ethereum payment behavior into verified,
-                machine-usable trust on Creditcoin. No bridge. No centralized
-                oracle. No custody.
+                Issue supplier invoices, pay vendors directly in USDC, and turn
+                verified settlement history into reusable business trust.
               </p>
               <div className="hero-actions">
                 <Link className="button-primary" to="/app">
-                  Launch testnet app <ArrowRight size={16} />
+                  Launch app <ArrowRight size={16} />
                 </Link>
                 <a className="button-ghost" href="#evidence">
-                  Inspect live proof <ExternalLink size={15} />
+                  View verified settlement <ExternalLink size={15} />
                 </a>
               </div>
               <div className="hero-verified-line">
                 <ShieldCheck size={17} />
-                <span>Attestcoin-verified source transaction</span>
+                <span>Non-custodial USDC payment</span>
                 <span className="divider" />
-                <span>Creditcoin 102031</span>
+                <span>Attestcoin-verified reconciliation</span>
               </div>
             </motion.div>
 
@@ -131,7 +130,7 @@ function Home() {
           <div className="hero-ticker" aria-label="Protocol properties">
             <span>NON-CUSTODIAL</span>
             <span>·</span>
-            <span>VERIFIED CROSS-CHAIN DATA</span>
+            <span>DIRECT USDC SETTLEMENT</span>
             <span>·</span>
             <span>ATOMIC TRUST UPDATE</span>
             <span>·</span>
@@ -144,9 +143,8 @@ function Home() {
             <span className="eyebrow">THE PROTOCOL</span>
             <h2>Settlement is the signal.</h2>
             <p>
-              Instead of trusting submitted claims or a private score, Ma'at
-              derives credit evidence from payments Attestcoin has
-              cryptographically verified.
+              Ma'at reconciles an exact commercial obligation from payment
+              evidence Attestcoin has cryptographically verified.
             </p>
           </div>
           <div className="principle-grid">
@@ -183,7 +181,7 @@ function Home() {
               <h3>Deterministic policy</h3>
               <p>
                 Verified payment count, volume, and timeliness produce
-                transparent tiers and credit limits.
+                transparent counterparty terms and eligible limits.
               </p>
             </article>
           </div>
@@ -221,9 +219,9 @@ function Home() {
             <span className="eyebrow">DON'T TRUST THE DEMO</span>
             <h2>Verify it.</h2>
             <p>
-              A complete one-USDC invoice has already crossed the full path.
-              Every state transition is inspectable on a public testnet
-              explorer.
+              A complete one-USDC supplier invoice has already crossed the full
+              path. Every state transition remains inspectable on public testnet
+              explorers.
             </p>
             <Link
               className="button-primary"
@@ -289,7 +287,7 @@ function Home() {
             GitHub
           </a>
         </div>
-        <span>BUILT FOR CREDITCOIN TESTNET</span>
+        <span>TESTNET PREVIEW · POWERED BY ATTESTCOIN</span>
       </footer>
     </div>
   )

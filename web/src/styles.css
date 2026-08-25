@@ -147,6 +147,21 @@ p {
   align-items: center;
 }
 
+.environment-badge {
+  margin-left: 14px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .brand-mark {
   display: inline-flex;
   gap: 10px;
@@ -1362,6 +1377,7 @@ button:disabled,
 
 .hero-copy {
   display: flex;
+  min-width: 0;
   align-items: flex-start;
   justify-content: center;
   flex-direction: column;
@@ -1442,6 +1458,7 @@ button:disabled,
 .hero-object {
   position: relative;
   display: grid;
+  min-width: 0;
   min-height: 620px;
   place-items: center;
   overflow: hidden;
@@ -2005,6 +2022,9 @@ button:disabled,
     width: 31px;
     height: 31px;
   }
+  .environment-badge {
+    display: none;
+  }
   .wallet-trigger {
     min-width: 42px;
     width: 42px;
@@ -2071,11 +2091,18 @@ button:disabled,
     padding: 48px 24px 56px;
   }
   .hero-copy h1 {
-    font-size: clamp(52px, 17vw, 72px);
+    max-width: 100%;
+    font-size: clamp(48px, 15.5vw, 66px);
+    overflow-wrap: anywhere;
+  }
+  .hero-copy > p {
+    width: 100%;
+    max-width: 100%;
   }
   .hero-actions {
     align-items: stretch;
     flex-direction: column;
+    min-width: 0;
     width: 100%;
   }
   .hero-actions > * {

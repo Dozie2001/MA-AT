@@ -30,12 +30,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "Ma'at | Verified cross-chain settlement",
+        title: "Ma'at | Verified USDC supplier settlement",
       },
       {
         name: 'description',
         content:
-          'Cross-chain B2B settlement on Creditcoin, verified through the Attestcoin Protocol.',
+          'Issue supplier invoices, pay vendors directly in USDC, and reconcile every payment with Attestcoin-verified evidence.',
       },
       {
         name: 'theme-color',

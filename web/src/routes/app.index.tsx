@@ -254,11 +254,11 @@ function Dashboard() {
     <>
       <div className="page-heading page-heading-row">
         <div>
-          <span className="eyebrow">SETTLEMENT CONTROL PLANE</span>
-          <h1>Financial truth, on-chain.</h1>
+          <span className="eyebrow">USDC SETTLEMENT WORKSPACE</span>
+          <h1>Invoices that reconcile themselves.</h1>
           <p>
-            Issue invoices on Creditcoin, settle in Sepolia USDC, and inspect
-            the trust produced by verified payment behavior.
+            Issue supplier invoices, pay directly in USDC, and build a verified
+            record of every commercial relationship.
           </p>
         </div>
         <Link className="button-primary" to="/app/invoices/new">
@@ -272,9 +272,10 @@ function Dashboard() {
             <div className="panel-heading">
               <div>
                 <span className="eyebrow">CONNECTED WALLET</span>
-                <h2>Settlement position</h2>
+                <h2>Verified account history</h2>
                 <p>
-                  Read directly from MaatTrustRegistry and MaatCreditPolicy.
+                  Payment activity, timeliness, and eligible terms derived from
+                  accepted settlements.
                 </p>
               </div>
               {metrics ? (
@@ -287,10 +288,10 @@ function Dashboard() {
               <div className="empty-state">
                 <div>
                   <ShieldCheck size={30} />
-                  <strong>Connect a wallet to read trust</strong>
+                  <strong>Connect a wallet to view account history</strong>
                   <span>
-                    Your payer metrics and credit limit are public Creditcoin
-                    state.
+                    Ma'at will load the invoices and verified settlement history
+                    associated with this address.
                   </span>
                 </div>
               </div>
@@ -309,7 +310,7 @@ function Dashboard() {
               <>
                 <div className="metric-grid">
                   <div className="metric-card">
-                    <span>Verified paid volume</span>
+                    <span>USDC paid</span>
                     <strong>${formatUsdc(metrics.totalPaidUsdc)}</strong>
                     <small>
                       {metrics.settledInvoiceCount.toString()} invoices ·{' '}
@@ -317,22 +318,24 @@ function Dashboard() {
                     </small>
                   </div>
                   <div className="metric-card">
-                    <span>Verified received volume</span>
-                    <strong>${formatUsdc(vendorMetrics.totalReceivedUsdc)}</strong>
+                    <span>USDC received</span>
+                    <strong>
+                      ${formatUsdc(vendorMetrics.totalReceivedUsdc)}
+                    </strong>
                     <small>
-                      {vendorMetrics.settledInvoiceCount.toString()} invoices ·
-                      Sepolia USDC
+                      {vendorMetrics.settledInvoiceCount.toString()} verified
+                      invoices
                     </small>
                   </div>
                   <div className="metric-card">
-                    <span>Credit policy limit</span>
+                    <span>Eligible settlement limit</span>
                     <strong>${formatUsdc(creditLimit)}</strong>
                     <small>{trustTiers[metrics.tier]} terms</small>
                   </div>
                 </div>
                 <div className="inline-notice">
-                  Lifetime trust combines verified v1 and v2 settlements. The
-                  credit-policy limit is the active v2 contract output.
+                  Lifetime history includes verified records across protocol
+                  upgrades. Eligibility reflects the active policy.
                 </div>
               </>
             ) : null}
@@ -386,11 +389,11 @@ function Dashboard() {
           <section className="panel panel-spaced">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">CREDITCOIN EVENT HISTORY</span>
+                <span className="eyebrow">BUSINESS RECORDS</span>
                 <h2>Your invoices</h2>
                 <p>
-                  Created by or assigned to this wallet, reconstructed directly
-                  from current and legacy InvoiceRegistry events.
+                  Invoices created by or assigned to this wallet, preserved
+                  across current and historical deployments.
                 </p>
               </div>
               {address ? (
@@ -473,8 +476,8 @@ function Dashboard() {
           <section className="panel sticky-panel">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">LIVE END-TO-END PROOF</span>
-                <h2>One USDC, verified.</h2>
+                <span className="eyebrow">VERIFIED SETTLEMENT</span>
+                <h2>1 USDC, fully reconciled.</h2>
               </div>
               <StatusPill tone="success">Settled</StatusPill>
             </div>
@@ -495,8 +498,8 @@ function Dashboard() {
               />
               <ProofStep
                 number="3"
-                title="Attestcoin accepted"
-                detail="Invoice + trust updated atomically"
+                title="Payment verified"
+                detail="Invoice + account history updated atomically"
                 hash={demoEvidence.settlementTx}
                 href={`https://creditcoin-testnet.blockscout.com/tx/${demoEvidence.settlementTx}`}
               />

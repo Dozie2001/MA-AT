@@ -15,6 +15,7 @@ export function SiteHeader({ app = false }: { app?: boolean }) {
         <Link to="/" className="brand-link" aria-label="Ma'at home">
           <BrandMark />
         </Link>
+        <span className="environment-badge">Testnet preview</span>
         <nav
           className={mobileOpen ? 'nav-links open' : 'nav-links'}
           aria-label="Primary navigation"
@@ -39,7 +40,7 @@ export function SiteHeader({ app = false }: { app?: boolean }) {
                 }}
                 onClick={() => setMobileOpen(false)}
               >
-                Live proof
+                Live settlement
               </Link>
             </>
           ) : (

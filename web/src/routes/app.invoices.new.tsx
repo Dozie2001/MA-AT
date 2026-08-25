@@ -189,11 +189,11 @@ function NewInvoice() {
           <span className="eyebrow">VENDOR WORKFLOW</span>
           <h1>Issue an invoice.</h1>
           <p>
-            These terms are written to InvoiceRegistry on Creditcoin Testnet.
-            Payment later happens in official Sepolia USDC.
+            Create exact USDC payment terms and share a permanent invoice link
+            with your customer.
           </p>
         </div>
-        <StatusPill tone="teal">Creditcoin 102031</StatusPill>
+        <StatusPill tone="teal">USDC invoice</StatusPill>
       </div>
 
       <div className="detail-layout">
@@ -293,10 +293,10 @@ function NewInvoice() {
                   ? 'Confirming transaction...'
                   : invoiceId
                     ? 'Invoice confirmed'
-                    : 'Create on Creditcoin'}
+                    : 'Create invoice'}
               </button>
               <span className="field-note">
-                Wallet signature required. tCTC pays gas.
+                Wallet signature required · Creditcoin testnet gas applies.
               </span>
             </div>
           </form>
@@ -348,15 +348,15 @@ function NewInvoice() {
         <aside className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">EXECUTION BOUNDARY</span>
-              <h2>What happens now</h2>
+              <span className="eyebrow">SETTLEMENT WORKFLOW</span>
+              <h2>From invoice to reconciliation</h2>
             </div>
           </div>
           <div className="network-callout">
             <Network size={20} />
             <div>
-              <strong>Creditcoin transaction</strong>
-              <span>InvoiceRegistry · chain 102031</span>
+              <strong>Testnet preview</strong>
+              <span>Creditcoin invoice · Ethereum USDC payment</span>
             </div>
           </div>
           <div className="proof-stack">
@@ -372,20 +372,20 @@ function NewInvoice() {
             <div className="proof-step">
               <span className="proof-dot">2</span>
               <div className="proof-copy">
-                <strong>Buyer pays on Sepolia</strong>
+                <strong>Buyer pays in USDC</strong>
                 <span>
-                  The app will request exact USDC approval and direct
-                  settlement.
+                  The app switches to the Ethereum test environment and requests
+                  the exact amount.
                 </span>
               </div>
             </div>
             <div className="proof-step">
               <span className="proof-dot">3</span>
               <div className="proof-copy">
-                <strong>Worker submits proof</strong>
+                <strong>Payment is reconciled</strong>
                 <span>
-                  Attestcoin verification stays outside the browser and uses no
-                  user key.
+                  Attestcoin verifies the transaction before Ma'at updates the
+                  invoice and counterparty history.
                 </span>
               </div>
             </div>
