@@ -1,22 +1,41 @@
-import { Check, ChevronDown, LogOut, Wallet, X } from 'lucide-react'
+import { usePrivy } from '@privy-io/react-auth'
+import {
+  Check,
+  ChevronDown,
+  LogOut,
+  Mail,
+  Wallet,
+  WalletCards,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
-import { useConnect, useConnection, useDisconnect, useSwitchChain } from 'wagmi'
+import { useConnection, useSwitchChain } from 'wagmi'
 
 import { truncateAddress } from '../lib/format'
 
 export function WalletButton() {
   const [isOpen, setIsOpen] = useState(false)
   const connection = useConnection()
-  const connect = useConnect()
-  const disconnect = useDisconnect()
   const switchChain = useSwitchChain()
+  const { authenticated, connectOrCreateWallet, login, logout, ready, user } =
+    usePrivy()
 
-  const isConnected = connection.status === 'connected'
-  const isConnecting = connection.status === 'connecting' || connect.isPending
+  const isConnected = authenticated && connection.status === 'connected'
+  const isLoading = !ready || connection.status === 'connecting'
+  const email = user?.email?.address
 
-  function close() {
+  function openWallet() {
+    if (!ready) return
+    if (!authenticated) {
+      login()
+      return
+    }
+    setIsOpen(true)
+  }
+
+  async function signOut() {
+    await logout()
     setIsOpen(false)
-    connect.reset()
   }
 
   return (
@@ -24,8 +43,8 @@ export function WalletButton() {
       <button
         className={isConnected ? 'wallet-trigger connected' : 'wallet-trigger'}
         type="button"
-        onClick={() => setIsOpen(true)}
-        aria-haspopup="dialog"
+        onClick={openWallet}
+        aria-haspopup={authenticated ? 'dialog' : undefined}
       >
         {isConnected ? (
           <ConnectorIcon
@@ -33,21 +52,27 @@ export function WalletButton() {
             name={connection.connector.name}
             compact
           />
+        ) : email ? (
+          <Mail size={16} />
         ) : (
           <Wallet size={16} />
         )}
         <span>
-          {isConnecting
-            ? 'Connecting...'
+          {isLoading
+            ? 'Loading wallet...'
             : connection.address
               ? truncateAddress(connection.address)
-              : 'Connect wallet'}
+              : (email ?? 'Log in or connect')}
         </span>
         <ChevronDown size={14} />
       </button>
 
       {isOpen ? (
-        <div className="modal-backdrop" role="presentation" onMouseDown={close}>
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setIsOpen(false)}
+        >
           <section
             className="wallet-dialog"
             role="dialog"
@@ -57,15 +82,15 @@ export function WalletButton() {
           >
             <div className="dialog-head">
               <div>
-                <span className="eyebrow">CONNECTION</span>
+                <span className="eyebrow">MA'AT ACCOUNT</span>
                 <h2 id="wallet-title">
-                  {isConnected ? 'Wallet connected' : 'Choose a wallet'}
+                  {isConnected ? 'Wallet connected' : 'Finish wallet setup'}
                 </h2>
               </div>
               <button
                 className="icon-button"
                 type="button"
-                onClick={close}
+                onClick={() => setIsOpen(false)}
                 aria-label="Close"
               >
                 <X size={18} />
@@ -84,47 +109,22 @@ export function WalletButton() {
                     {connection.connector.name} ·{' '}
                     {connection.chain?.name ?? `Chain ${connection.chainId}`}
                   </span>
+                  {email ? <small>{email}</small> : null}
                 </div>
                 <Check className="success-icon" size={20} />
               </div>
             ) : (
-              <div className="wallet-options">
-                {connect.connectors.map((connector) => (
-                  <button
-                    type="button"
-                    key={connector.uid}
-                    onClick={() =>
-                      connect.mutate({ connector }, { onSuccess: close })
-                    }
-                    disabled={connect.isPending}
-                  >
-                    <ConnectorIcon
-                      icon={connector.icon}
-                      name={connector.name}
-                    />
-                    <span>
-                      <strong>{connector.name}</strong>
-                      <small>Injected browser wallet</small>
-                    </span>
-                    <span className="arrow">↗</span>
-                  </button>
-                ))}
-                {connect.connectors.length === 0 ? (
-                  <div className="inline-notice danger">
-                    No EIP-1193 wallet was detected in this browser.
-                  </div>
-                ) : null}
+              <div className="wallet-connected-panel">
+                <WalletCards size={22} />
+                <div>
+                  <strong>No active EVM wallet</strong>
+                  <span>Connect or create a wallet to continue.</span>
+                </div>
               </div>
             )}
 
-            {connect.error ? (
-              <div className="inline-notice danger">
-                {connect.error.message.split('\n')[0]}
-              </div>
-            ) : null}
-
-            {isConnected ? (
-              <div className="dialog-actions">
+            <div className="dialog-actions">
+              {isConnected ? (
                 <div className="chain-switch-row">
                   {switchChain.chains.map((chain) => (
                     <button
@@ -140,20 +140,27 @@ export function WalletButton() {
                     </button>
                   ))}
                 </div>
+              ) : (
                 <button
-                  className="text-button danger-text"
+                  className="button-primary"
                   type="button"
-                  onClick={() =>
-                    disconnect.mutate(undefined, { onSuccess: close })
-                  }
+                  onClick={connectOrCreateWallet}
                 >
-                  <LogOut size={16} /> Disconnect
+                  Connect or create wallet
                 </button>
-              </div>
-            ) : null}
+              )}
+              <button
+                className="text-button danger-text"
+                type="button"
+                onClick={signOut}
+              >
+                <LogOut size={16} /> Log out
+              </button>
+            </div>
             <p className="dialog-footnote">
-              Ma'at never requests or stores private keys. Your wallet signs
-              each transaction.
+              Ma'at never requests or stores private keys. Privy secures email
+              access and wallet connections; every transaction still requires
+              authorization.
             </p>
           </section>
         </div>

@@ -4,14 +4,13 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
-import { WagmiProvider } from 'wagmi'
 
 import '@fontsource/instrument-serif/400.css'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 
 import appCss from '../styles.css?url'
-import { wagmiConfig } from '../lib/web3'
+import { Web3Providers } from '../components/web3-providers'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -60,7 +59,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
-        <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+        <Web3Providers>{children}</Web3Providers>
         <Scripts />
       </body>
     </html>

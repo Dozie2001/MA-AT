@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as ApiBuyerWalletRouteImport } from './routes/api.buyer-wallet'
+import { Route as ApiInvoiceInvitationsRouteImport } from './routes/api.invoice-invitations'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppInvoicesInvoiceIdRouteImport } from './routes/app.invoices.$invoiceId'
 import { Route as AppInvoicesNewRouteImport } from './routes/app.invoices.new'
@@ -23,6 +25,16 @@ const IndexRoute = IndexRouteImport.update({
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBuyerWalletRoute = ApiBuyerWalletRouteImport.update({
+  id: '/api/buyer-wallet',
+  path: '/api/buyer-wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInvoiceInvitationsRoute = ApiInvoiceInvitationsRouteImport.update({
+  id: '/api/invoice-invitations',
+  path: '/api/invoice-invitations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -44,12 +56,16 @@ const AppInvoicesNewRoute = AppInvoicesNewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/api/buyer-wallet': typeof ApiBuyerWalletRoute
+  '/api/invoice-invitations': typeof ApiInvoiceInvitationsRoute
   '/app/': typeof AppIndexRoute
   '/app/invoices/$invoiceId': typeof AppInvoicesInvoiceIdRoute
   '/app/invoices/new': typeof AppInvoicesNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/buyer-wallet': typeof ApiBuyerWalletRoute
+  '/api/invoice-invitations': typeof ApiInvoiceInvitationsRoute
   '/app': typeof AppIndexRoute
   '/app/invoices/$invoiceId': typeof AppInvoicesInvoiceIdRoute
   '/app/invoices/new': typeof AppInvoicesNewRoute
@@ -58,6 +74,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/api/buyer-wallet': typeof ApiBuyerWalletRoute
+  '/api/invoice-invitations': typeof ApiInvoiceInvitationsRoute
   '/app/': typeof AppIndexRoute
   '/app/invoices/$invoiceId': typeof AppInvoicesInvoiceIdRoute
   '/app/invoices/new': typeof AppInvoicesNewRoute
@@ -65,13 +83,27 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/app' | '/app/' | '/app/invoices/$invoiceId' | '/app/invoices/new'
+    | '/'
+    | '/app'
+    | '/api/buyer-wallet'
+    | '/api/invoice-invitations'
+    | '/app/'
+    | '/app/invoices/$invoiceId'
+    | '/app/invoices/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/app/invoices/$invoiceId' | '/app/invoices/new'
+  to:
+    | '/'
+    | '/api/buyer-wallet'
+    | '/api/invoice-invitations'
+    | '/app'
+    | '/app/invoices/$invoiceId'
+    | '/app/invoices/new'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/api/buyer-wallet'
+    | '/api/invoice-invitations'
     | '/app/'
     | '/app/invoices/$invoiceId'
     | '/app/invoices/new'
@@ -80,6 +112,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  ApiBuyerWalletRoute: typeof ApiBuyerWalletRoute
+  ApiInvoiceInvitationsRoute: typeof ApiInvoiceInvitationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -96,6 +130,20 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/buyer-wallet': {
+      id: '/api/buyer-wallet'
+      path: '/api/buyer-wallet'
+      fullPath: '/api/buyer-wallet'
+      preLoaderRoute: typeof ApiBuyerWalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/invoice-invitations': {
+      id: '/api/invoice-invitations'
+      path: '/api/invoice-invitations'
+      fullPath: '/api/invoice-invitations'
+      preLoaderRoute: typeof ApiInvoiceInvitationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -139,6 +187,8 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  ApiBuyerWalletRoute: ApiBuyerWalletRoute,
+  ApiInvoiceInvitationsRoute: ApiInvoiceInvitationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
