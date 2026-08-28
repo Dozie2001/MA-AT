@@ -1,10 +1,13 @@
+import { usePrivy } from '@privy-io/react-auth'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
   FilePlus2,
+  Mail,
   Network,
+  WalletCards,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
@@ -27,6 +30,7 @@ import { InvoiceShareActions } from '../components/invoice-share-actions'
 import { StatusPill } from '../components/status-pill'
 import { contracts, invoiceRegistryAbi, usdcIconUrl } from '../lib/contracts'
 import { errorMessage, explorerTransaction } from '../lib/format'
+import { prepareInvitedBuyer, sendInvitedBuyerEmail } from '../lib/invitations'
 import { creditCoin3Testnet } from '../lib/web3'
 
 export const Route = createFileRoute('/app/invoices/new')({
@@ -35,10 +39,15 @@ export const Route = createFileRoute('/app/invoices/new')({
 
 interface SubmittedInvoice {
   buyer: Address
+  inviteEmail?: string
   amountBaseUnits: bigint
   dueAt: number
   metadataHash: Hex
+  vendor: Address
 }
+
+type BuyerMode = 'email' | 'wallet'
+type InvitationDelivery = 'idle' | 'sending' | 'sent' | 'failed'
 
 function defaultDueDate() {
   const date = new Date(Date.now() + 10 * 60 * 1_000)
@@ -48,17 +57,24 @@ function defaultDueDate() {
 }
 
 function NewInvoice() {
+  const { authenticated, getAccessToken } = usePrivy()
   const connection = useConnection()
   const switchChain = useSwitchChain()
   const write = useWriteContract()
+  const [buyerMode, setBuyerMode] = useState<BuyerMode>('email')
+  const [buyerEmail, setBuyerEmail] = useState('')
   const [buyer, setBuyer] = useState('')
   const [amount, setAmount] = useState('1.00')
   const [dueAt, setDueAt] = useState(defaultDueDate)
   const [reference, setReference] = useState('')
   const [memo, setMemo] = useState('')
   const [formError, setFormError] = useState<string>()
+  const [isPreparingBuyer, setIsPreparingBuyer] = useState(false)
   const [submitted, setSubmitted] = useState<SubmittedInvoice>()
   const [invoiceId, setInvoiceId] = useState<Hex>()
+  const [invitationDelivery, setInvitationDelivery] =
+    useState<InvitationDelivery>('idle')
+  const [invitationError, setInvitationError] = useState<string>()
 
   const receipt = useWaitForTransactionReceipt({
     chainId: creditCoin3Testnet.id,
@@ -67,7 +83,7 @@ function NewInvoice() {
   })
 
   useEffect(() => {
-    if (!receipt.data || !submitted || !connection.address || invoiceId) return
+    if (!receipt.data || !submitted || invoiceId) return
 
     for (const log of receipt.data.logs) {
       if (getAddress(log.address) !== contracts.invoiceRegistry) continue
@@ -79,7 +95,7 @@ function NewInvoice() {
           eventName: 'InvoiceCreated',
         })
         if (
-          decoded.args.vendor !== connection.address ||
+          decoded.args.vendor !== submitted.vendor ||
           decoded.args.buyer !== submitted.buyer ||
           decoded.args.amount !== submitted.amountBaseUnits ||
           decoded.args.dueAt !== BigInt(submitted.dueAt) ||
@@ -100,7 +116,36 @@ function NewInvoice() {
     setFormError(
       'Transaction confirmed, but its InvoiceCreated event was not found.',
     )
-  }, [connection.address, invoiceId, receipt.data, submitted])
+  }, [invoiceId, receipt.data, submitted])
+
+  useEffect(() => {
+    if (
+      !invoiceId ||
+      !submitted?.inviteEmail ||
+      invitationDelivery !== 'idle'
+    ) {
+      return
+    }
+
+    setInvitationDelivery('sending')
+    setInvitationError(undefined)
+    void getAccessToken()
+      .then((accessToken) => {
+        if (!accessToken)
+          throw new Error('Log in again to send the invitation.')
+        return sendInvitedBuyerEmail({
+          accessToken,
+          email: submitted.inviteEmail!,
+          invoiceId,
+          vendorAddress: submitted.vendor,
+        })
+      })
+      .then(() => setInvitationDelivery('sent'))
+      .catch((error: unknown) => {
+        setInvitationDelivery('failed')
+        setInvitationError(errorMessage(error))
+      })
+  }, [getAccessToken, invitationDelivery, invoiceId, submitted])
 
   async function createInvoice(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -111,13 +156,47 @@ function NewInvoice() {
       setFormError('Connect the vendor wallet before creating an invoice.')
       return
     }
-    if (!isAddress(buyer)) {
-      setFormError('Enter a valid EVM buyer address.')
-      return
+    const vendorAddress = getAddress(connection.address)
+    let normalizedBuyer: Address
+    let inviteEmail: string | undefined
+
+    if (buyerMode === 'email') {
+      if (!authenticated) {
+        setFormError('Log in before inviting a buyer by email.')
+        return
+      }
+      if (!buyerEmail.trim()) {
+        setFormError('Enter the buyer email address.')
+        return
+      }
+
+      setIsPreparingBuyer(true)
+      try {
+        const accessToken = await getAccessToken()
+        if (!accessToken)
+          throw new Error('Log in again to prepare the buyer wallet.')
+        normalizedBuyer = await prepareInvitedBuyer({
+          accessToken,
+          email: buyerEmail,
+          vendorAddress,
+        })
+        inviteEmail = buyerEmail.trim().toLowerCase()
+        setBuyer(normalizedBuyer)
+      } catch (error) {
+        setFormError(errorMessage(error))
+        return
+      } finally {
+        setIsPreparingBuyer(false)
+      }
+    } else {
+      if (!isAddress(buyer)) {
+        setFormError('Enter a valid EVM buyer address.')
+        return
+      }
+      normalizedBuyer = getAddress(buyer)
     }
 
-    const normalizedBuyer = getAddress(buyer)
-    if (normalizedBuyer === connection.address) {
+    if (normalizedBuyer === vendorAddress) {
       setFormError('The buyer must be different from the connected vendor.')
       return
     }
@@ -150,11 +229,15 @@ function NewInvoice() {
     )
     const terms = {
       buyer: normalizedBuyer,
+      inviteEmail,
       amountBaseUnits,
       dueAt: dueTimestamp,
       metadataHash,
+      vendor: vendorAddress,
     }
     setSubmitted(terms)
+    setInvitationDelivery('idle')
+    setInvitationError(undefined)
 
     try {
       if (connection.chainId !== creditCoin3Testnet.id) {
@@ -177,7 +260,7 @@ function NewInvoice() {
     }
   }
 
-  const pending = write.isPending || receipt.isLoading
+  const pending = isPreparingBuyer || write.isPending || receipt.isLoading
 
   return (
     <>
@@ -189,11 +272,11 @@ function NewInvoice() {
           <span className="eyebrow">VENDOR WORKFLOW</span>
           <h1>Issue an invoice.</h1>
           <p>
-            These terms are written to InvoiceRegistry on Creditcoin Testnet.
-            Payment later happens in official Sepolia USDC.
+            Create exact USDC payment terms and share a permanent invoice link
+            with your customer.
           </p>
         </div>
-        <StatusPill tone="teal">Creditcoin 102031</StatusPill>
+        <StatusPill tone="teal">USDC invoice</StatusPill>
       </div>
 
       <div className="detail-layout">
@@ -211,20 +294,72 @@ function NewInvoice() {
           <form onSubmit={createInvoice} noValidate>
             <div className="form-grid">
               <div className="field full">
-                <label htmlFor="buyer">Buyer wallet</label>
-                <input
-                  id="buyer"
-                  autoComplete="off"
-                  spellCheck="false"
-                  placeholder="0x..."
-                  value={buyer}
-                  onChange={(event) => setBuyer(event.target.value)}
-                  required
-                />
-                <span className="field-note">
-                  Must differ from the connected vendor wallet.
-                </span>
+                <span className="field-label">Buyer identity</span>
+                <div className="buyer-mode-switch" role="group">
+                  <button
+                    className={buyerMode === 'email' ? 'active' : ''}
+                    type="button"
+                    onClick={() => {
+                      setBuyerMode('email')
+                      setBuyer('')
+                    }}
+                  >
+                    <Mail size={15} /> Invite by email
+                  </button>
+                  <button
+                    className={buyerMode === 'wallet' ? 'active' : ''}
+                    type="button"
+                    onClick={() => {
+                      setBuyerMode('wallet')
+                      setBuyer('')
+                    }}
+                  >
+                    <WalletCards size={15} /> Use wallet address
+                  </button>
+                </div>
               </div>
+              {buyerMode === 'email' ? (
+                <div className="field full">
+                  <label htmlFor="buyer-email">Buyer email</label>
+                  <input
+                    id="buyer-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="accounts@customer.com"
+                    value={buyerEmail}
+                    onChange={(event) => {
+                      setBuyerEmail(event.target.value)
+                      setBuyer('')
+                    }}
+                    required
+                  />
+                  <span className="field-note">
+                    Ma'at prepares a Privy wallet for this email, binds it to
+                    the invoice, and sends access after confirmation.
+                  </span>
+                  {buyer ? (
+                    <span className="resolved-wallet">
+                      Prepared wallet · {buyer}
+                    </span>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="field full">
+                  <label htmlFor="buyer">Buyer wallet</label>
+                  <input
+                    id="buyer"
+                    autoComplete="off"
+                    spellCheck="false"
+                    placeholder="0x..."
+                    value={buyer}
+                    onChange={(event) => setBuyer(event.target.value)}
+                    required
+                  />
+                  <span className="field-note">
+                    Use this when the customer already controls an EVM wallet.
+                  </span>
+                </div>
+              )}
               <div className="field">
                 <label className="token-label" htmlFor="amount">
                   Amount{' '}
@@ -289,14 +424,16 @@ function NewInvoice() {
                 type="submit"
                 disabled={pending || Boolean(invoiceId)}
               >
-                {pending
-                  ? 'Confirming transaction...'
-                  : invoiceId
-                    ? 'Invoice confirmed'
-                    : 'Create on Creditcoin'}
+                {isPreparingBuyer
+                  ? 'Preparing buyer wallet...'
+                  : pending
+                    ? 'Confirming transaction...'
+                    : invoiceId
+                      ? 'Invoice confirmed'
+                      : 'Create invoice'}
               </button>
               <span className="field-note">
-                Wallet signature required. tCTC pays gas.
+                Wallet signature required · Creditcoin testnet gas applies.
               </span>
             </div>
           </form>
@@ -333,6 +470,35 @@ function NewInvoice() {
                 The receipt event matches the submitted vendor, buyer, amount,
                 due time, and metadata hash.
               </p>
+              {submitted?.inviteEmail ? (
+                <div className={`invitation-delivery ${invitationDelivery}`}>
+                  <Mail size={17} />
+                  <div>
+                    <strong>
+                      {invitationDelivery === 'sent'
+                        ? 'Buyer invitation sent'
+                        : invitationDelivery === 'failed'
+                          ? 'Invoice created; invitation needs attention'
+                          : 'Sending buyer invitation'}
+                    </strong>
+                    <span>
+                      {invitationDelivery === 'sent'
+                        ? `Delivered to the email provider for ${submitted.inviteEmail}.`
+                        : (invitationError ??
+                          'The on-chain invoice is safe while email delivery completes.')}
+                    </span>
+                  </div>
+                  {invitationDelivery === 'failed' ? (
+                    <button
+                      className="text-button"
+                      type="button"
+                      onClick={() => setInvitationDelivery('idle')}
+                    >
+                      Retry
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               <InvoiceShareActions invoiceId={invoiceId} />
               <Link
                 className="button-primary"
@@ -348,15 +514,15 @@ function NewInvoice() {
         <aside className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">EXECUTION BOUNDARY</span>
-              <h2>What happens now</h2>
+              <span className="eyebrow">SETTLEMENT WORKFLOW</span>
+              <h2>From invoice to reconciliation</h2>
             </div>
           </div>
           <div className="network-callout">
             <Network size={20} />
             <div>
-              <strong>Creditcoin transaction</strong>
-              <span>InvoiceRegistry · chain 102031</span>
+              <strong>Testnet preview</strong>
+              <span>Creditcoin invoice · Ethereum USDC payment</span>
             </div>
           </div>
           <div className="proof-stack">
@@ -372,20 +538,20 @@ function NewInvoice() {
             <div className="proof-step">
               <span className="proof-dot">2</span>
               <div className="proof-copy">
-                <strong>Buyer pays on Sepolia</strong>
+                <strong>Buyer pays in USDC</strong>
                 <span>
-                  The app will request exact USDC approval and direct
-                  settlement.
+                  The app switches to the Ethereum test environment and requests
+                  the exact amount.
                 </span>
               </div>
             </div>
             <div className="proof-step">
               <span className="proof-dot">3</span>
               <div className="proof-copy">
-                <strong>Worker submits proof</strong>
+                <strong>Payment is reconciled</strong>
                 <span>
-                  Attestcoin verification stays outside the browser and uses no
-                  user key.
+                  Attestcoin verifies the transaction before Ma'at updates the
+                  invoice and counterparty history.
                 </span>
               </div>
             </div>

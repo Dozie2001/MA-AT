@@ -4,14 +4,13 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
-import { WagmiProvider } from 'wagmi'
 
 import '@fontsource/instrument-serif/400.css'
 import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 
 import appCss from '../styles.css?url'
-import { wagmiConfig } from '../lib/web3'
+import { Web3Providers } from '../components/web3-providers'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -30,12 +29,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "Ma'at | Verified cross-chain settlement",
+        title: "Ma'at | Verified USDC supplier settlement",
       },
       {
         name: 'description',
         content:
-          'Cross-chain B2B settlement on Creditcoin, verified through the Attestcoin Protocol.',
+          'Issue supplier invoices, pay vendors directly in USDC, and reconcile every payment with Attestcoin-verified evidence.',
       },
       {
         name: 'theme-color',
@@ -60,7 +59,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body suppressHydrationWarning>
-        <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+        <Web3Providers>{children}</Web3Providers>
         <Scripts />
       </body>
     </html>

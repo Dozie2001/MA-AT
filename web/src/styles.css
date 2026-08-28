@@ -147,6 +147,21 @@ p {
   align-items: center;
 }
 
+.environment-badge {
+  margin-left: 14px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .brand-mark {
   display: inline-flex;
   gap: 10px;
@@ -394,6 +409,13 @@ p {
 .wallet-connected-panel span {
   color: var(--muted-foreground);
   font-size: 11px;
+}
+
+.wallet-connected-panel small {
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  overflow-wrap: anywhere;
 }
 
 .wallet-connected-panel {
@@ -971,10 +993,42 @@ button:disabled,
   grid-column: 1 / -1;
 }
 
-.field label {
+.field label,
+.field-label {
   color: var(--foreground);
   font-size: 12px;
   font-weight: 650;
+}
+
+.buyer-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--secondary);
+}
+
+.buyer-mode-switch button {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 650;
+  background: transparent;
+}
+
+.buyer-mode-switch button.active {
+  border-color: var(--border-soft);
+  color: var(--foreground);
+  background: var(--background);
+  box-shadow: 0 5px 15px rgb(17 47 43 / 8%);
 }
 
 .field label span {
@@ -1012,6 +1066,16 @@ button:disabled,
   font-size: 10px;
 }
 
+.resolved-wallet {
+  padding: 9px 10px;
+  border-left: 2px solid var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  font-family: var(--mono);
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
 .form-actions {
   display: flex;
   gap: 11px;
@@ -1046,6 +1110,43 @@ button:disabled,
   font-family: var(--mono);
   font-size: 9px;
   overflow-wrap: anywhere;
+}
+
+.invitation-delivery {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--background);
+}
+
+.invitation-delivery > div {
+  display: grid;
+  gap: 3px;
+}
+
+.invitation-delivery span {
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.invitation-delivery.sent {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-soft));
+}
+
+.invitation-delivery.sent > svg {
+  color: var(--primary);
+}
+
+.invitation-delivery.failed {
+  border-color: color-mix(in srgb, var(--destructive) 42%, var(--border-soft));
+}
+
+.invitation-delivery.failed > svg {
+  color: var(--destructive);
 }
 
 .detail-layout {
@@ -1362,6 +1463,7 @@ button:disabled,
 
 .hero-copy {
   display: flex;
+  min-width: 0;
   align-items: flex-start;
   justify-content: center;
   flex-direction: column;
@@ -1442,6 +1544,7 @@ button:disabled,
 .hero-object {
   position: relative;
   display: grid;
+  min-width: 0;
   min-height: 620px;
   place-items: center;
   overflow: hidden;
@@ -2005,6 +2108,9 @@ button:disabled,
     width: 31px;
     height: 31px;
   }
+  .environment-badge {
+    display: none;
+  }
   .wallet-trigger {
     min-width: 42px;
     width: 42px;
@@ -2071,11 +2177,18 @@ button:disabled,
     padding: 48px 24px 56px;
   }
   .hero-copy h1 {
-    font-size: clamp(52px, 17vw, 72px);
+    max-width: 100%;
+    font-size: clamp(48px, 15.5vw, 66px);
+    overflow-wrap: anywhere;
+  }
+  .hero-copy > p {
+    width: 100%;
+    max-width: 100%;
   }
   .hero-actions {
     align-items: stretch;
     flex-direction: column;
+    min-width: 0;
     width: 100%;
   }
   .hero-actions > * {

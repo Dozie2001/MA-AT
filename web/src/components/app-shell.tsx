@@ -10,8 +10,8 @@ export function AppShell() {
         <Outlet />
       </main>
       <footer className="app-footer">
-        <span>Ma'at testnet application</span>
-        <span>Sepolia · Attestcoin · Creditcoin 102031</span>
+        <span>Ma'at verified settlement</span>
+        <span>Testnet preview · Ethereum · Attestcoin · Creditcoin</span>
       </footer>
     </div>
   )

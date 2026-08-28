@@ -411,9 +411,9 @@ function InvoiceDetail() {
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">CREDITCOIN TERMS</span>
+                <span className="eyebrow">COMMERCIAL TERMS</span>
                 <h2>Invoice details</h2>
-                <p>Read directly from InvoiceRegistry on chain 102031.</p>
+                <p>Permanent terms recorded before the USDC payment.</p>
               </div>
               <a
                 className="icon-button"
@@ -492,11 +492,11 @@ function InvoiceDetail() {
           <section className="panel panel-spaced">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">CROSS-CHAIN STATE</span>
-                <h2>Verification timeline</h2>
+                <span className="eyebrow">SETTLEMENT STATUS</span>
+                <h2>Reconciliation timeline</h2>
                 <p>
-                  Sepolia payment evidence is detected independently from
-                  Creditcoin settlement state.
+                  Follow the invoice from issued terms to verified payment and
+                  final reconciliation.
                 </p>
               </div>
             </div>
@@ -505,7 +505,7 @@ function InvoiceDetail() {
                 <span className="proof-dot">1</span>
                 <div className="proof-copy">
                   <strong>Terms committed</strong>
-                  <span>Creditcoin InvoiceRegistry</span>
+                  <span>Invoice terms recorded</span>
                 </div>
               </div>
               <div
@@ -518,7 +518,7 @@ function InvoiceDetail() {
                       ? 'USDC payment found'
                       : 'Waiting for payment'}
                   </strong>
-                  <span>Sepolia SettlementRouter</span>
+                  <span>USDC payment rail · Ethereum test environment</span>
                   {matchingPayment?.transactionHash ? (
                     <a
                       href={explorerTransaction(
@@ -561,12 +561,12 @@ function InvoiceDetail() {
                 <div className="proof-copy">
                   <strong>
                     {invoice.status === 2
-                      ? 'Invoice and trust updated'
+                      ? 'Invoice and history updated'
                       : proofAvailable
                         ? 'Awaiting Creditcoin submission'
                         : 'Settlement follows verification'}
                   </strong>
-                  <span>Atomic Creditcoin business logic</span>
+                  <span>Atomic invoice reconciliation</span>
                 </div>
               </div>
             </div>
@@ -577,11 +577,8 @@ function InvoiceDetail() {
               <div className="panel-heading">
                 <div>
                   <span className="eyebrow">ATTESTCOIN EVIDENCE</span>
-                  <h2>Proof receipt</h2>
-                  <p>
-                    Verifiable metadata returned for the exact Sepolia payment
-                    transaction.
-                  </p>
+                  <h2>Technical evidence</h2>
+                  <p>Attestcoin proof metadata for the exact source payment.</p>
                 </div>
                 <StatusPill
                   tone={
@@ -673,8 +670,8 @@ function InvoiceDetail() {
                 </>
               ) : (
                 <div className="inline-notice">
-                  The payment is final on Sepolia. Ma'at checks every 15 seconds
-                  until Attestcoin publishes its proof.
+                  The USDC payment is final. Ma'at checks every 15 seconds until
+                  Attestcoin publishes its proof.
                 </div>
               )}
             </section>
@@ -683,9 +680,9 @@ function InvoiceDetail() {
           <section className="panel panel-spaced">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">PAYER RISK</span>
-                <h2>Verified trust</h2>
-                <p>Only accepted settlements alter these values.</p>
+                <span className="eyebrow">PAYMENT RELIABILITY</span>
+                <h2>Verified account history</h2>
+                <p>Only accepted settlements change these values.</p>
               </div>
               {metrics ? (
                 <StatusPill tone={metrics.tier === 4 ? 'danger' : 'teal'}>
@@ -712,9 +709,9 @@ function InvoiceDetail() {
                     <small>Verified USDC · all deployments</small>
                   </div>
                   <div className="metric-card">
-                    <span>Credit limit</span>
+                    <span>Eligible settlement limit</span>
                     <strong>${formatUsdc(creditLimit)}</strong>
-                    <small>Active v2 policy output</small>
+                    <small>Active policy output</small>
                   </div>
                 </div>
                 <div className="inline-notice">
@@ -739,11 +736,11 @@ function InvoiceDetail() {
                     ? 'Settlement complete'
                     : !isWritableInvoice
                       ? 'Historical record'
-                    : isBuyer
-                      ? 'Pay invoice'
-                      : isVendor
-                        ? 'Vendor controls'
-                        : 'Read-only view'}
+                      : isBuyer
+                        ? 'Pay invoice'
+                        : isVendor
+                          ? 'Vendor controls'
+                          : 'Read-only view'}
                 </h2>
               </div>
             </div>
@@ -774,16 +771,15 @@ function InvoiceDetail() {
                 <div className="network-callout">
                   <img className="token-icon" src={usdcIconUrl} alt="USDC" />
                   <div>
-                    <strong>Ethereum Sepolia</strong>
+                    <strong>Pay {formatUsdc(invoice.amount)} USDC</strong>
                     <span>
-                      Official USDC · exact {formatUsdc(invoice.amount)}{' '}
-                      approval
+                      Ethereum Sepolia · test environment · exact approval
                     </span>
                   </div>
                 </div>
                 {sourcePayments.isPending ? (
                   <div className="inline-notice">
-                    Checking Sepolia for an existing payment...
+                    Checking for an existing USDC payment...
                   </div>
                 ) : null}
                 {sourcePayments.error ? (
@@ -794,9 +790,8 @@ function InvoiceDetail() {
                 ) : null}
                 {alreadyPaid ? (
                   <div className="inline-notice">
-                    <Clock3 size={15} /> Payment is confirmed on Sepolia. The
-                    proof worker must now submit Attestcoin evidence to
-                    Creditcoin.
+                    <Clock3 size={15} /> USDC payment confirmed. Attestcoin
+                    verification is now pending.
                   </div>
                 ) : null}
                 {!alreadyPaid && balance.data !== undefined && !hasBalance ? (
@@ -848,7 +843,7 @@ function InvoiceDetail() {
                   >
                     {paymentPending
                       ? 'Confirming payment...'
-                      : '2. Pay vendor directly'}
+                      : `2. Pay ${formatUsdc(invoice.amount)} USDC`}
                   </button>
                 ) : null}
                 <p className="field-note">
@@ -934,8 +929,8 @@ function InvoiceDetail() {
               <ShieldAlert size={21} />
               <h3>Do not pay again</h3>
               <p>
-                A matching router payment already exists. Creditcoin remains
-                open until the Attestcoin proof transaction is accepted.
+                A matching USDC payment already exists. The invoice remains open
+                until Attestcoin verification is accepted.
               </p>
             </section>
           ) : null}
